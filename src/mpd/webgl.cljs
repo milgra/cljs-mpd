@@ -10,7 +10,8 @@
             [cljs-webgl.constants.texture-target :as texture-target]
             [cljs-webgl.buffers :as buffers]
             [cljs-webgl.typed-arrays :as ta]))
-  
+
+
 (def vertex-source
   "attribute highp vec4 position;
    attribute highp vec4 color;
@@ -24,6 +25,7 @@
 	colorv = color;
 	positionv = position;
    }")
+
 
 (def fragment-source
   "varying highp vec4 colorv;
@@ -47,8 +49,11 @@
 
 
 (defn init []
-  (let [context (context/get-context (.getElementById js/document "main"))
-
+  "initialize webgl moduel"
+  (let [context (context/get-context
+                 (.getElementById js/document "main")
+                 {:premultiplied-alpha false :alpha false})
+    
         shader (shaders/create-program
                 context
                 (shaders/create-shader context shader/vertex-shader vertex-source)

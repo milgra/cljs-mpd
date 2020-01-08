@@ -26,8 +26,9 @@
   (letfn [(loop [oldstate frame]
             (fn [time]
               (let [newstate (draw-fn oldstate frame time)]
-              (.requestAnimationFrame js/window (loop newstate (inc frame))))
-              ))]
+                (.requestAnimationFrame
+                 js/window
+                 (loop newstate (inc frame))))))]
     ((loop state 0) 0 )))
 
 
@@ -38,27 +39,36 @@
 
 
 (defn main []
+  "entering point"
+  (let [keych (chan)
 
-  (let
-      [initstate {:glstate (webgl/init)
-                  :level_file "level0.svg"
-                  :level_state "none"
-                  :keypresses {}
-                  :masses [(mass/mass2 100.0 300.0 1.0 1.0 1.0)]}
-       filechannel (chan)
-       keychannel (chan)]
+        tchch (chan)
 
-    ;; key listeners
+        filech (chan)
+        
+        state {:glstate (webgl/init)
+               :level_file "level0.svg"
+               :level_state "none"
+               :keypresses {}
+               :masses [(mass/mass2 100.0 300.0 1.0 1.0 1.0)]}]
 
     (events/listen
      js/document
      EventType.KEYDOWN
-     (fn [event] (put! keychannel {:code (.-keyCode event) :value true})))
+     (fn [event] (put! keych {:code (.-keyCode event) :value true})))
 
     (events/listen
      js/document
      EventType.KEYUP
-     (fn [event] (put! keychannel {:code (.-keyCode event) :value false})))
+     (fn [event] (put! keych {:code (.-keyCode event) :value false})))
+                                                                                        
+    (events/listen                          
+     js/document
+     EventType.MOUSEDOWN                                                                       (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "down"})))                                                                                                                    
+    (events/listen                           
+     js/document         
+     EventType.MOUSEUP           
+     (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "up"})))              
 
     (events/listen
      js/window
@@ -68,34 +78,32 @@
 
     (resize-context!)
     
-    ;; runloop
-    
     (animate
-     initstate
-     (fn [state frame time]
+     state
+     (fn [oldstate frame time]
        (cond 
          
-         (= (:level_state state) "none")
+         (= (:level_state oldstate) "none")
          (do
-           (load-level! filechannel (:level_file state))
-           (assoc state :level_state "loading"))
+           (load-level! filech (:level_file oldstate))
+           (assoc oldstate :level_state "loading"))
          
-         (= (:level_state state) "loading")
-         (let [shapes (poll! filechannel)]
+         (= (:level_state oldstate) "loading")
+         (let [shapes (poll! filech)]
            (if shapes
              (let [surfacepts (filter #(and (= (% :id) "Surfaces") (not (contains? % :color))) shapes )
                    lines (partition 2 (flatten (map (fn [shape]
                                 (partition 2 (flatten (partition 2 1 (:path shape)))))
                               surfacepts)))]
  
-               (-> state
+               (-> oldstate
                    (assoc :surfaces (surface/generate-from-pointlist surfacepts))
                    (assoc :lines lines )
                    (assoc :level_state "loaded")))
-               state))
+               oldstate))
 
 
-         (= (:level_state state) "loaded")
+         (= (:level_state oldstate) "loaded")
          (let [r (/ (.-innerWidth js/window) (.-innerHeight js/window) )
                h 300.0
                w (* h r)
@@ -107,18 +115,18 @@
                            -1.0
                            1.0)
                
-               keyevent (poll! keychannel)
+               keyevent (poll! keych)
                
-               surfaces (:surfaces state)
-               masses (:masses state)
+               surfaces (:surfaces oldstate)
+               masses (:masses oldstate)
 
                newmasses (mass/update-masses masses surfaces 1.0)
 
-               newstate (-> state
+               newstate (-> oldstate
                             (assoc :masses newmasses))]
            
-           (webgl/drawlines! (:glstate state) projection (:lines state))
-           (webgl/drawpoints! (:glstate state) projection (map :trans newmasses))
+           (webgl/drawlines! (:glstate oldstate) projection (:lines oldstate))
+           (webgl/drawpoints! (:glstate oldstate) projection (map :trans newmasses))
 
            newstate
            )
@@ -128,24 +136,4 @@
     )
   )
 
-;; template functions
-
-;;(println "AA This text is printed from src/brawl/core.cljs. Go ahead and edit it and see reloading in action.")
-
-(def app-state (atom {}))
-
-(defn multiply [a b] (* a b))
-
-(defn get-app-element []
-  (gdom/getElement "app"))
-
-;; specify reload hook with ^;after-load metadata
-(defn ^:after-load on-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  (swap! app-state update-in [:__figwheel_counter] inc)
-  (println "app-state" app-state)
-)
-
-;; start entry point, can we do this from project.clj?
 (main)
