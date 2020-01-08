@@ -49,7 +49,7 @@
 
 
 (defn init []
-  "initialize webgl moduel"
+  "initialize webgl module"
   (let [context (context/get-context
                  (.getElementById js/document "main")
                  {:premultiplied-alpha false :alpha false})
@@ -82,13 +82,11 @@
      :location_pos location_pos
      :location_col location_col}))
 
+
 (defn drawlines! [ {:keys [context shader line_buffer location_pos location_col] :as state} projection lines ]
-  
-  ;; draw line buffer
+  "draw lines"
     
   (.bindBuffer context buffer-object/array-buffer line_buffer)
-    
-  ;; load in new vertexdata
   
   (.bufferData context
                buffer-object/array-buffer
@@ -119,16 +117,15 @@
                  :stride 32}]
    :uniforms [{:name "projection"
                :type :mat4
-               :values projection}]))
+               :values projection}])
+
+  state)
 
 
 (defn drawpoints! [{:keys [context shader mass_buffer location_pos location_col] :as state} projection points]
-
-  ;; draw mass buffer
+  "draw points"
   
   (.bindBuffer context buffer-object/array-buffer mass_buffer)
-  
-  ;; load in new vertexdata
   
   (.bufferData context
                buffer-object/array-buffer
@@ -159,5 +156,5 @@
             :uniforms [{:name "projection"
                         :type :mat4
                         :values projection}])
-  ;; return state
+
   state)

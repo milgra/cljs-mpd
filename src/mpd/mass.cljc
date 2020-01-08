@@ -28,8 +28,8 @@
                                  ))
                                basis)]
         (-> mass
-            (assoc ,,, :trans [(+ tx (* bx time))(+ ty (* by time ))])
-            (assoc ,,, :basis newbasis))))
+            (assoc :trans [(+ tx (* bx time))(+ ty (* by time ))])
+            (assoc :basis newbasis))))
 
 
 (defn moves-masses
@@ -41,6 +41,7 @@
 
 
 (defn set-gravity [{ [ bx by ] :basis :as mass } time]
+  "sets gravity for given mass"
   (assoc mass :basis [bx (* (+ by 0.5) time )]))
 
 

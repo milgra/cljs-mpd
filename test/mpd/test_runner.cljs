@@ -2,7 +2,6 @@
 (ns mpd.test-runner
   (:require
     ;; require all the namespaces that you want to test
-   [mpd.core-test]
    [mpd.mass-test]
     [figwheel.main.testing :refer [run-tests-async]]))
 

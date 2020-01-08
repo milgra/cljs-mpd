@@ -61,14 +61,16 @@
      js/document
      EventType.KEYUP
      (fn [event] (put! keych {:code (.-keyCode event) :value false})))
-                                                                                        
+
     (events/listen                          
      js/document
-     EventType.MOUSEDOWN                                                                       (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "down"})))                                                                                                                    
-    (events/listen                           
+     EventType.MOUSEDOWN
+     (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "down"})))
+    
+    (events/listen
      js/document         
      EventType.MOUSEUP           
-     (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "up"})))              
+     (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "up"})))
 
     (events/listen
      js/window
@@ -102,14 +104,13 @@
                    (assoc :level_state "loaded")))
                oldstate))
 
-
          (= (:level_state oldstate) "loaded")
          (let [r (/ (.-innerWidth js/window) (.-innerHeight js/window) )
                h 300.0
                w (* h r)
                projection (math4/proj_ortho
-                           (- (* w 2))
-                           (+ (* w 2))
+                           (+ (- (* w 2)) 900.0)
+                           (+ (+ (* w 2)) 900.0)
                            (+ (* h 2))
                            (- (* h 2))
                            -1.0
@@ -118,22 +119,17 @@
                keyevent (poll! keych)
                
                surfaces (:surfaces oldstate)
+               
                masses (:masses oldstate)
 
                newmasses (mass/update-masses masses surfaces 1.0)
 
                newstate (-> oldstate
                             (assoc :masses newmasses))]
-           
+
            (webgl/drawlines! (:glstate oldstate) projection (:lines oldstate))
            (webgl/drawpoints! (:glstate oldstate) projection (map :trans newmasses))
 
-           newstate
-           )
-         )
-       )
-     )
-    )
-  )
+           newstate))))))
 
 (main)
