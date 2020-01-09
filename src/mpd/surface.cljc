@@ -12,7 +12,7 @@
        (reduce
         (fn builder [res [x y]] (conj res (math2/segment2 x y)))
         []
-        (partition 2 1 (:path (first src)))))
+        (partition 2 1 (first src))))
        (recur (rest src) res))))
 
 

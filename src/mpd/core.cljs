@@ -13,16 +13,8 @@
   (:import [goog.events EventType]))
   
 
-(defn load-level! [channel name]
-  (go
-    (let [response (<! (http/get name
-                                 {:with-credentials? false}))
-          xmlstr (xml->clj (:body response) {:strict false})
-          shapes (svg/psvg xmlstr "")]
-      (put! channel shapes))))
-
-
 (defn animate [state draw-fn]
+  "main runloop, syncs animation to display refresh rate"
   (letfn [(loop [oldstate frame]
             (fn [time]
               (let [newstate (draw-fn oldstate frame time)]
@@ -33,6 +25,7 @@
 
 
 (defn resize-context! [ ]
+  "resizes canvas on window size change"
   (let [canvas (. js/document getElementById "main")]
         (set! (. canvas -width) (. js/window -innerWidth))
         (set! (. canvas -height) (. js/window -innerHeight))))
@@ -44,12 +37,15 @@
 
         tchch (chan)
 
-        filech (chan)
-        
+        points '([(38.613 241.018) (53.321 396.925)
+                  (1103.035 464.38) (1204.737 465.087)
+                  (2197.789 408.692) (2218.38 258.667)])
+
+        linepts (apply concat (partition 2 1 (apply concat points)))
+               
+        surfaces (surface/generate-from-pointlist points)
+
         state {:glstate (webgl/init)
-               :level_file "level0.svg"
-               :level_state "none"
-               :keypresses {}
                :masses [(mass/mass2 100.0 300.0 1.0 1.0 1.0)]}]
 
     (events/listen
@@ -75,61 +71,39 @@
     (events/listen
      js/window
      EventType.RESIZE
-     (fn [event]
-       (resize-context!)))
+     (fn [event] (resize-context!)))
 
     (resize-context!)
     
     (animate
      state
      (fn [oldstate frame time]
-       (cond 
-         
-         (= (:level_state oldstate) "none")
-         (do
-           (load-level! filech (:level_file oldstate))
-           (assoc oldstate :level_state "loading"))
-         
-         (= (:level_state oldstate) "loading")
-         (let [shapes (poll! filech)]
-           (if shapes
-             (let [surfacepts (filter #(and (= (% :id) "Surfaces") (not (contains? % :color))) shapes )
-                   lines (partition 2 (flatten (map (fn [shape]
-                                (partition 2 (flatten (partition 2 1 (:path shape)))))
-                              surfacepts)))]
- 
-               (-> oldstate
-                   (assoc :surfaces (surface/generate-from-pointlist surfacepts))
-                   (assoc :lines lines )
-                   (assoc :level_state "loaded")))
-               oldstate))
+       (let [r (/ (.-innerWidth js/window) (.-innerHeight js/window) )
+             h 300.0
+             w (* h r)
+             projection (math4/proj_ortho
+                         (+ (- (* w 2)) 900.0)
+                         (+ (+ (* w 2)) 900.0)
+                         (+ (* h 2))
+                         (- (* h 2))
+                         -1.0
+                         1.0)
 
-         (= (:level_state oldstate) "loaded")
-         (let [r (/ (.-innerWidth js/window) (.-innerHeight js/window) )
-               h 300.0
-               w (* h r)
-               projection (math4/proj_ortho
-                           (+ (- (* w 2)) 900.0)
-                           (+ (+ (* w 2)) 900.0)
-                           (+ (* h 2))
-                           (- (* h 2))
-                           -1.0
-                           1.0)
-               
-               keyevent (poll! keych)
-               
-               surfaces (:surfaces oldstate)
-               
-               masses (:masses oldstate)
+             keyevent (poll! keych)
 
-               newmasses (mass/update-masses masses surfaces 1.0)
+             tchevent (poll! tchch)
 
-               newstate (-> oldstate
-                            (assoc :masses newmasses))]
+             ;; move and collide masses to get new position
+             newmasses (mass/update-masses (:masses oldstate) surfaces 1.0)
 
-           (webgl/drawlines! (:glstate oldstate) projection (:lines oldstate))
-           (webgl/drawpoints! (:glstate oldstate) projection (map :trans newmasses))
+             ;; draw mass points and surfaces
+             newglstate (-> (:glstate oldstate)
+                            (webgl/drawlines! projection linepts)
+                            (webgl/drawpoints! projection (map :trans newmasses)))]
 
-           newstate))))))
+         ;; return with new state
+         (-> oldstate
+             (assoc :masses newmasses)
+             (assoc :glstate newglstate)))))))
 
 (main)
