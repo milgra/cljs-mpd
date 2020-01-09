@@ -31,22 +31,7 @@
         (set! (. canvas -height) (. js/window -innerHeight))))
 
 
-(defn main []
-  "entering point"
-  (let [keych (chan)
-
-        tchch (chan)
-
-        points '([(38.613 241.018) (53.321 396.925)
-                  (1103.035 464.38) (1204.737 465.087)
-                  (2197.789 408.692) (2218.38 258.667)])
-
-        linepts (apply concat (partition 2 1 (apply concat points)))
-               
-        surfaces (surface/generate-from-pointlist points)
-
-        state {:glstate (webgl/init)
-               :masses [(mass/mass2 100.0 300.0 1.0 1.0 1.0)]}]
+(defn init-events! [keych tchch]
 
     (events/listen
      js/document
@@ -71,23 +56,36 @@
     (events/listen
      js/window
      EventType.RESIZE
-     (fn [event] (resize-context!)))
+     (fn [event] (resize-context!))))
 
+
+(defn main []
+  "entering point"
+  (let [keych (chan)
+
+        tchch (chan)
+
+        drawer (webgl/init)
+
+        points '([(10 200) (10 400) (500 430) (990 400) (990 200)])
+
+        masses [(mass/mass2 100.0 0.0 1.0 1.0 1.0)]
+               
+        surfaces (surface/generate-from-pointlist points)
+
+        lines (apply concat (partition 2 1 (apply concat points)))
+
+        state {:drawer drawer
+               :masses masses}]
+
+    (init-events! keych tchch)
+    
     (resize-context!)
     
     (animate
      state
      (fn [oldstate frame time]
-       (let [r (/ (.-innerWidth js/window) (.-innerHeight js/window) )
-             h 300.0
-             w (* h r)
-             projection (math4/proj_ortho
-                         (+ (- (* w 2)) 900.0)
-                         (+ (+ (* w 2)) 900.0)
-                         (+ (* h 2))
-                         (- (* h 2))
-                         -1.0
-                         1.0)
+       (let [projection (math4/proj_ortho 0.0 1000.0 500.0 0.0 -1.0 1.0)
 
              keyevent (poll! keych)
 
@@ -97,13 +95,13 @@
              newmasses (mass/update-masses (:masses oldstate) surfaces 1.0)
 
              ;; draw mass points and surfaces
-             newglstate (-> (:glstate oldstate)
-                            (webgl/drawlines! projection linepts)
+             newdrawer (-> (:drawer oldstate)
+                            (webgl/drawlines! projection lines)
                             (webgl/drawpoints! projection (map :trans newmasses)))]
 
          ;; return with new state
          (-> oldstate
              (assoc :masses newmasses)
-             (assoc :glstate newglstate)))))))
+             (assoc :drawer newdrawer)))))))
 
 (main)
