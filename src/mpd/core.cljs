@@ -5,7 +5,6 @@
             [cljs-http.client :as http]
             [cljs.core.async :refer [<! chan put! take! poll!]]
             [cljs.core.async :refer-macros [go]]
-            [mpd.surface :as surface]
             [mpd.svg :as svg]
             [mpd.mass :as mass]
             [mpd.math4 :as math4]
@@ -71,7 +70,7 @@
 
         masses [(mass/mass2 100.0 0.0 1.0 1.0 1.0)]
                
-        surfaces (surface/generate-from-pointlist points)
+        surfaces (mass/surfaces-from-pointlist points)
 
         lines (apply concat (partition 2 1 (apply concat points)))
 
@@ -85,6 +84,7 @@
     (animate
      state
      (fn [oldstate frame time]
+       ;;(if (= 0 (mod time 5))
        (let [projection (math4/proj_ortho 0.0 1000.0 500.0 0.0 -1.0 1.0)
 
              keyevent (poll! keych)
@@ -102,6 +102,8 @@
          ;; return with new state
          (-> oldstate
              (assoc :masses newmasses)
-             (assoc :drawer newdrawer)))))))
+             (assoc :drawer newdrawer)))
+       ;;oldstate)
+       ))))
 
 (main)

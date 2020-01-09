@@ -1,6 +1,38 @@
 (ns mpd.mass
-  (:require [mpd.surface :as s]
-            [mpd.math2 :as math2]))
+  (:require [mpd.math2 :as math2]))
+
+
+(defn surfaces-from-pointlist
+  "Generates physics/segment2-s from surface point list"
+  [surfacepoints]
+  (loop [src surfacepoints
+         res []]
+    (if (not-empty src)
+      (concat res
+       (reduce
+        (fn builder [res [x y]] (conj res (math2/segment2 x y)))
+        []
+        (partition 2 1 (first src))))
+       (recur (rest src) res))))
+
+
+(defn collect-colliding-surfaces
+  "collect surfaces touched by masspoint movement"
+  [mass surfaces]
+  (let [mtrans (:trans mass)
+        mbasis (:basis mass)]
+    (reduce
+     (fn checktouch [res {strans :trans sbasis :basis :as onesurface }]
+       (let [cross (math2/cross_vec2
+                    mtrans
+                    mbasis
+                    strans
+                    sbasis )]
+         (if (not= cross nil)
+           (conj res onesurface)
+           res)))
+     []
+     surfaces)))
 
 
 (defn mass2
@@ -19,7 +51,8 @@
                   radius :radius
                   elast :elasticity :as mass} surfaces time]
   "check collision of mass basis with all surfaces, moves mass to next iteration point based on time"
-  (let [touched (s/collect-colliding mass surfaces)
+  (println "move mass" tx ty basis)
+  (let [touched (collect-colliding-surfaces mass surfaces)
         [bx by :as newbasis] (if (not-empty touched)
                                (let [[mx my] (math2/scale_vec2 (math2/mirror_vec2 ((first touched) :basis ) basis) elast) ]
                                  (if (and (< mx radius) (< my radius))
@@ -38,12 +71,6 @@
   (map (fn [element]
          (move-mass element surfaces time))
        masses))
-
-
-(defn set-gravity [{ [ bx by ] :basis :as mass } time]
-  "sets gravity for given mass"
-  (assoc mass :basis [bx (* (+ by 0.5) time )]))
-
 
 (defn add-gravity
   "adds gravity vector to masspoints basises"
