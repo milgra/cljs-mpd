@@ -68,7 +68,7 @@
 
         points '([(10 200) (10 400) (500 430) (990 400) (990 200)])
 
-        masses [(phys2/mass2 100.0 0.0 1.0 1.0 1.0)]
+        masses [(phys2/mass2 500.0 300.0 1.0 1.0 1.0)]
                
         surfaces (phys2/surfaces-from-pointlist points)
 
@@ -84,7 +84,7 @@
     (animate
      state
      (fn [oldstate frame time]
-       ;;(if (= 0 (mod time 5))
+       (if (= 0 (mod frame 5))
        (let [projection (math4/proj_ortho 0.0 1000.0 500.0 0.0 -1.0 1.0)
 
              keyevent (poll! keych)
@@ -103,7 +103,7 @@
          (-> oldstate
              (assoc :masses newmasses)
              (assoc :drawer newdrawer)))
-       ;;oldstate)
+       oldstate)
        ))))
 
 (main)
