@@ -1,6 +1,27 @@
 (ns mpd.math2)
 
 
+(defn length-v2 [ [ax ay] ]
+  (Math/sqrt (+ (* ax ax) (* ay ay))))
+
+
+(defn sub-v2 [ [ax ay] [bx by] ]
+  [(- ax bx) (- ay by)])
+
+
+(defn add-v2 [[ax ay][bx by]]
+  [(+ ax bx) (+ ay by)])
+
+
+(defn scale-v2 [ [x y] ratio ]
+  [(* x ratio) (* y ratio)])
+
+
+(defn resize-v2 [[x y] size]
+  (let [ratio (/ size (length-v2 [x y]))]
+    [(* x ratio) (* y ratio)]))
+
+
 (defn segment2
   "creates segment 2d structure"
   [[x y][ z v]]
@@ -28,7 +49,7 @@
         ( / (- (* A2 C1) (* A1 C2)) DT) ]))))
 
 
-(defn p2-in-v2? [[tx ty] [bx by] [px py] radius]
+(defn p2-in-v2? [[px py] [tx ty] [bx by] radius]
   "check if p is inside vector defined by trans and basis with given radius from endpoints
    it checks point distance from the halfpoint of the vector"
   (let [lx (/ bx 2)
@@ -42,7 +63,7 @@
     (and xok yok)))
 
 
-(defn dist-p2-v2 [[px py] [tx ty] [bx by]]
+(defn dist-p2-l2 [[px py] [tx ty] [bx by]]
   "calculate distance of point and vector
    https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line #Line defined by two points"
   (let [cx (+ tx bx)
@@ -58,38 +79,28 @@
     (if (= cp nil)
      nil
      (if (and
-          (p2-in-v2? transa basisa cp radius)
-          (p2-in-v2? transb basisb cp radius))
+          (p2-in-v2? cp transa basisa radius)
+          (p2-in-v2? cp transb basisb radius))
        cp
        nil))))
+
+
+(defn p2-near-v2? [[px py] [tx ty] [bx by] radius]
+  (let [cross (isp-l2-l2 [tx ty][bx by][px py][(- by) bx])
+        connv (sub-v2 [px py] cross)]
+    (and (< (length-v2 connv) radius) (p2-in-v2? cross [tx ty] [bx by] radius))))
 
 
 (defn mirror-v2-bases [[ax ay] [vx vy]]
   "mirrors vector on axis, projects v on a, then adds the connecting vector of v and p to p"
   (let [[px py] (isp-l2-l2 [0 0] [ax ay] [vx vy] [ay (- ax)])
-        [bx by] [(- cx vx) (- cy vy)]]
+        [bx by] [(- px vx) (- py vy)]]
     [(+ px bx) (+ py by)]))
 
 
-(defn length-v2 [ [ax ay] ]
-  (Math/sqrt (+ (* ax ax) (* ay ay))))
-
-
-(defn resize-v2 [[x y] size]
-  (let [ratio (/ size (length-v2 [x y]))]
-    [(* x ratio) (* y ratio)]))
-
-
-(defn scale-v2 [ [x y] ratio ]
-  [(* x ratio) (* y ratio)])
-
-
-(defn sub-v2 [ [ax ay] [bx by] ]
-  [(- ax bx) (- ay by)])
-
-
-(defn add-v2 [[ax ay][bx by]]
-  [(+ ax bx) (+ ay by)])
+(defn dist-p2-p2-cubic [[ax ay][bx by]]
+  "returns distance of two points based on x and y distances to avoid square root calculation"
+  (+ (Math/abs (- bx ax)) (Math/abs (- by ay))))
 
 
 (defn rotate-90-cw [ [x y] ]

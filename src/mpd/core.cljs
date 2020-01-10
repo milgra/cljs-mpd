@@ -84,7 +84,7 @@
     (animate
      state
      (fn [oldstate frame time]
-       (if (= 0 (mod frame 5))
+       (if (= 0 (mod frame 1))
        (let [projection (math4/proj_ortho 0.0 1000.0 500.0 0.0 -1.0 1.0)
 
              keyevent (poll! keych)
