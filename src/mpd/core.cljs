@@ -6,7 +6,7 @@
             [cljs.core.async :refer [<! chan put! take! poll!]]
             [cljs.core.async :refer-macros [go]]
             [mpd.svg :as svg]
-            [mpd.mass :as mass]
+            [mpd.phys2 :as phys2]
             [mpd.math4 :as math4]
             [mpd.webgl :as webgl])
   (:import [goog.events EventType]))
@@ -68,9 +68,9 @@
 
         points '([(10 200) (10 400) (500 430) (990 400) (990 200)])
 
-        masses [(mass/mass2 100.0 0.0 1.0 1.0 1.0)]
+        masses [(phys2/mass2 100.0 0.0 1.0 1.0 1.0)]
                
-        surfaces (mass/surfaces-from-pointlist points)
+        surfaces (phys2/surfaces-from-pointlist points)
 
         lines (apply concat (partition 2 1 (apply concat points)))
 
@@ -92,7 +92,7 @@
              tchevent (poll! tchch)
 
              ;; move and collide masses to get new position
-             newmasses (mass/update-masses (:masses oldstate) surfaces 1.0)
+             newmasses (phys2/update-masses (:masses oldstate) surfaces 1.0)
 
              ;; draw mass points and surfaces
              newdrawer (-> (:drawer oldstate)
