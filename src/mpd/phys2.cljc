@@ -31,7 +31,7 @@
                   radius)
              end (math2/add-v2 trans basis)
              near (math2/p2-near-v2? end (:trans surface) (:basis surface) radius)]
-         (if (not= cross nil)
+         (if (not= isp nil)
            (conj result [(math2/dist-p2-p2-cubic trans isp) surface])
            (if near
              (conj result [radius surface])
@@ -63,34 +63,38 @@
                  surfaces
                  time]
   "check collision of mass basis with all surfaces, moves mass to next iteration point based on time"
-  ;;(loop [prevtrans trans
-  ;;       prevbasis basis]
-         
-  (let [segments (map second (sort-by first < (get-colliding-surfaces mass surfaces)))
-
-        ;; in case of intersection with surface, move mass back to safe distance (radius from surface)
-        ;; mirror basis on surface and reduce it with passed distance
-        ;; in case of multiple surfaces revert basis and move mass back to safe distance from all surfaces
-        ;; repeat while basis exists
-        ;; if basis is smaller than radius stop movement
-
-        segment (first segments)
-        
-        newtrans (if (not-empty segments)
-                   (move-mass-back (:trans segment) (:basis segment) trans basis (* 1.1 radius))
-                   (math2/add-v2 trans basis))
-
-        newbasis (if (not-empty segments)
-                   (math2/scale-v2 (math2/mirror-v2-bases (segment :basis) basis) elasticity)
-                   basis)]
-
-    (if segment
-      (println "newtrans" newtrans "newbasis" newbasis "segments" segments ))
+  (loop [prevtrans trans
+         prevbasis basis
+         finished false]
+    (if finished
+      (-> mass
+          (assoc :trans prevtrans)
+          (assoc :basis prevbasis))
+      (let [segments (map second (sort-by first < (get-colliding-surfaces mass surfaces)))
+            
+            ;; in case of intersection with surface, move mass back to safe distance (radius from surface)
+            ;; mirror basis on surface and reduce it with passed distance
+            ;; in case of multiple surfaces revert basis and move mass back to safe distance from all surfaces
+            ;; repeat while basis exists
+            ;; if basis is smaller than radius stop movement
+            
+            segment (first segments)
+            
+            newtrans (if (not-empty segments)
+                       (move-mass-back (:trans segment) (:basis segment) trans basis (* 1.1 radius))
+                       (math2/add-v2 trans basis))
+            
+            newbasis (if (not-empty segments)
+                       (math2/scale-v2 (math2/mirror-v2-bases (segment :basis) basis) elasticity)
+                       basis)]
     
-    (-> mass
-        (assoc :trans newtrans)
-        (assoc :basis newbasis))))
+        (if segment
+          (println "newtrans" newtrans "newbasis" newbasis "segments" segments ))
 
+        
+        (recur newtrans newbasis true)
+        ))))
+    
 
 (defn moves-masses
   "check collisions and move masses to new positions considering collisions"
