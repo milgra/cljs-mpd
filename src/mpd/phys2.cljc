@@ -58,43 +58,44 @@
    :elasticity e
    :segmentgroups []})
 
+            
+;; in case of intersection with surface, move mass back to safe distance (radius from surface)
+;; mirror basis on surface and reduce it with passed distance
+;; ??? in case of multiple surfaces revert basis and move mass back to safe distance from all surfaces
+;; repeat while basis exists
+;; if basis is smaller than radius stop movement
 
 (defn move-mass [{:keys [trans basis radius elasticity] :as mass}
                  surfaces
                  time]
   "check collision of mass basis with all surfaces, moves mass to next iteration point based on time"
-  (loop [prevtrans trans
-         prevbasis basis
-         finished false]
+  (loop [prevmass mass
+         finished false
+         iterations 0]
     (if finished
-      (-> mass
-          (assoc :trans prevtrans)
-          (assoc :basis prevbasis))
+      prevmass
       (let [segments (map second (sort-by first < (get-colliding-surfaces mass surfaces)))
-            
-            ;; in case of intersection with surface, move mass back to safe distance (radius from surface)
-            ;; mirror basis on surface and reduce it with passed distance
-            ;; in case of multiple surfaces revert basis and move mass back to safe distance from all surfaces
-            ;; repeat while basis exists
-            ;; if basis is smaller than radius stop movement
-            
             segment (first segments)
-            
-            newtrans (if (not-empty segments)
-                       (move-mass-back (:trans segment) (:basis segment) trans basis (* 1.1 radius))
-                       (math2/add-v2 trans basis))
-            
-            newbasis (if (not-empty segments)
-                       (math2/scale-v2 (math2/mirror-v2-bases (segment :basis) basis) elasticity)
-                       basis)]
-    
-        (if segment
-          (println "newtrans" newtrans "newbasis" newbasis "segments" segments ))
 
-        
-        (recur newtrans newbasis true)
-        ))))
-    
+            ptrans (prevmass :trans)
+            pbasis (prevmass :basis)
+
+            newmass (if segment
+                      (let [newtrans (move-mass-back (:trans segment) (:basis segment) ptrans pbasis (* 1.1 radius))
+                            newbasis (math2/scale-v2 (math2/mirror-v2-bases (segment :basis) pbasis) elasticity)
+                            fullsize (math2/length-v2 pbasis)
+                            currsize (math2/length-v2 (math2/sub-v2 newtrans ptrans))]
+                            
+                        (-> prevmass
+                            (assoc :trans newtrans)
+                            (assoc :basis newbasis)))
+                      (-> prevmass
+                          (assoc :trans (math2/add-v2 ptrans pbasis))))]
+        (recur
+         newmass
+         true ;;         (or (> iterations 4) (not segment))
+         (inc iterations))))))
+
 
 (defn moves-masses
   "check collisions and move masses to new positions considering collisions"
@@ -102,6 +103,7 @@
   (map (fn [element]
          (move-mass element surfaces time))
        masses))
+
 
 (defn add-gravity
   "adds gravity vector to masspoints basises"
