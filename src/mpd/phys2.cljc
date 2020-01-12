@@ -30,11 +30,11 @@
                   (surface :basis)
                   radius)
              end (math2/add-v2 trans basis)
-             near (math2/p2-near-v2? end (:trans surface) (:basis surface) radius)]
+             dst (math2/p2-near-v2? end (:trans surface) (:basis surface) radius)]
          (if (not= isp nil)
            (conj result [(math2/dist-p2-p2-cubic trans isp) surface])
-           (if near
-             (conj result [radius surface])
+           (if dst
+             (conj result [dst surface])
              result))))
      []
      surfaces)))
@@ -69,32 +69,29 @@
                  surfaces
                  time]
   "check collision of mass basis with all surfaces, moves mass to next iteration point based on time"
-  (loop [prevmass mass
-         finished false
-         iterations 0]
+  (loop [pmass mass
+         ready false
+         count 0]
     (if finished
-      prevmass
-      (let [segments (map second (sort-by first < (get-colliding-surfaces mass surfaces)))
+      pmass
+      (let [segments (map second (sort-by first < (get-colliding-surfaces pmass surfaces)))
             segment (first segments)
-
-            ptrans (prevmass :trans)
-            pbasis (prevmass :basis)
-
+            ptrans (pmass :trans)
+            pbasis (pmass :basis)
             newmass (if segment
                       (let [newtrans (move-mass-back (:trans segment) (:basis segment) ptrans pbasis (* 1.1 radius))
                             newbasis (math2/scale-v2 (math2/mirror-v2-bases (segment :basis) pbasis) elasticity)
                             fullsize (math2/length-v2 pbasis)
                             currsize (math2/length-v2 (math2/sub-v2 newtrans ptrans))]
-                            
-                        (-> prevmass
+                        (-> pmass
                             (assoc :trans newtrans)
                             (assoc :basis newbasis)))
-                      (-> prevmass
+                      (-> pmass
                           (assoc :trans (math2/add-v2 ptrans pbasis))))]
         (recur
          newmass
-         true ;;         (or (> iterations 4) (not segment))
-         (inc iterations))))))
+         (or (> count 4) (not segment))
+         (inc count))))))
 
 
 (defn moves-masses

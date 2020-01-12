@@ -85,10 +85,13 @@
        nil))))
 
 
-(defn p2-near-v2? [[px py] [tx ty] [bx by] radius]
+(defn dist-p2-v2 [[px py] [tx ty] [bx by]]
   (let [cross (isp-l2-l2 [tx ty][bx by][px py][(- by) bx])
         connv (sub-v2 [px py] cross)]
-    (and (< (length-v2 connv) radius) (p2-in-v2? cross [tx ty] [bx by] radius))))
+    (if (p2-in-v2? cross [tx ty] [bx by] 0)
+      (length-v2 connv)
+      nil
+      )))
 
 
 (defn mirror-v2-bases [[ax ay] [vx vy]]
