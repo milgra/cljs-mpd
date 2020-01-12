@@ -30,10 +30,10 @@
                   (surface :basis)
                   radius)
              end (math2/add-v2 trans basis)
-             dst (math2/p2-near-v2? end (:trans surface) (:basis surface) radius)]
+             dst (math2/dist-p2-v2 end (:trans surface) (:basis surface))]
          (if (not= isp nil)
            (conj result [(math2/dist-p2-p2-cubic trans isp) surface])
-           (if dst
+           (if (< dst radius)
              (conj result [dst surface])
              result))))
      []
@@ -41,10 +41,12 @@
 
 
 (defn move-mass-back [[tx ty][bx by][mx my][mbx mby] radius]
-  (let [[cx cy] (math2/isp-l2-l2 [tx ty][bx by][mx my][(- by) bx])
+  "moves line closer to mass with radius, gets isp"
+  (let [[cx cy] (math2/isp-l2-l2 [tx ty][bx by][mx my][by (- bx)])
         [dx dy] [(- mx cx)(- my cy)]
         [nx ny] (math2/resize-v2 [dx dy] radius)
         [fx fy] (math2/add-v2 [cx cy] [nx ny])]
+    ;;(println "mx" mx "my" my "bx" bx "by" by "cx" cx "cy" cy "dx" dx "dy" dy "nx" nx "ny" ny "fx" fx "fy" fy)
     (math2/isp-l2-l2 [fx fy] [bx by] [mx my] [mbx mby])))
 
 
@@ -69,30 +71,39 @@
                  surfaces
                  time]
   "check collision of mass basis with all surfaces, moves mass to next iteration point based on time"
-  (loop [pmass mass
-         ready false
-         count 0]
+  (loop [{ptrans :trans
+          pbasis :basis :as pmass } mass
+         fbasis pbasis
+         finished false
+         counter 0]
     (if finished
-      pmass
+      (assoc pmass :basis fbasis)          
       (let [segments (map second (sort-by first < (get-colliding-surfaces pmass surfaces)))
-            segment (first segments)
-            ptrans (pmass :trans)
-            pbasis (pmass :basis)
-            newmass (if segment
-                      (let [newtrans (move-mass-back (:trans segment) (:basis segment) ptrans pbasis (* 1.1 radius))
-                            newbasis (math2/scale-v2 (math2/mirror-v2-bases (segment :basis) pbasis) elasticity)
-                            fullsize (math2/length-v2 pbasis)
-                            currsize (math2/length-v2 (math2/sub-v2 newtrans ptrans))]
-                        (-> pmass
+            {strans :trans sbasis :basis :as segment} (first segments)]
+        (if segment
+          (let [newtrans (move-mass-back strans sbasis ptrans pbasis (* 1.5 radius))
+                fullsize (math2/length-v2 pbasis)
+                currsize (math2/length-v2 (math2/sub-v2 newtrans ptrans))
+                usedsize (if (< currsize radius)
+                           radius
+                           (- fullsize currsize))
+                newfbasis (math2/scale-v2 (math2/mirror-v2-bases sbasis fbasis) elasticity)
+                newbasis (math2/resize-v2 newfbasis usedsize)
+                newmass (-> pmass
                             (assoc :trans newtrans)
-                            (assoc :basis newbasis)))
-                      (-> pmass
-                          (assoc :trans (math2/add-v2 ptrans pbasis))))]
-        (recur
-         newmass
-         (or (> count 4) (not segment))
-         (inc count))))))
-
+                            (assoc :basis newbasis))]
+            (recur
+             newmass
+             newfbasis
+             (or (> counter 4) (not segment))
+             (inc counter)))
+          
+          (recur
+           (assoc pmass :trans (math2/add-v2 ptrans pbasis))
+           fbasis
+           true
+           (inc counter)))))))
+  
 
 (defn moves-masses
   "check collisions and move masses to new positions considering collisions"
@@ -110,9 +121,8 @@
        masses))
 
 
-(defn update-masses
+(defn update-masses [masses surfaces time]
   "Moves masses to new positions considering collisions"
-  [masses surfaces time]
   (let [newmasses
         (-> masses
             (add-gravity 0.5 time)

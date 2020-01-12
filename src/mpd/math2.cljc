@@ -18,8 +18,10 @@
 
 
 (defn resize-v2 [[x y] size]
-  (let [ratio (/ size (length-v2 [x y]))]
-    [(* x ratio) (* y ratio)]))
+  (if (> size 0)
+    (let [ratio (/ size (length-v2 [x y]))]
+      [(* x ratio) (* y ratio)])
+    [0 0]))
 
 
 (defn segment2
@@ -90,7 +92,7 @@
         connv (sub-v2 [px py] cross)]
     (if (p2-in-v2? cross [tx ty] [bx by] 0)
       (length-v2 connv)
-      nil
+      ##Inf
       )))
 
 

@@ -66,9 +66,9 @@
 
         drawer (webgl/init)
 
-        points '([(10 200) (10 400) (500 430) (990 400) (990 200)])
+        points '([(10 200) (400 400) (500 430) (600 0) (990 200)])
 
-        masses [(phys2/mass2 500.0 300.0 1.0 1.0 1.0)]
+        masses [(phys2/mass2 200.0 0.0 1.0 1.0 0.99)]
                
         surfaces (phys2/surfaces-from-pointlist points)
 
