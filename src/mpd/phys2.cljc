@@ -69,30 +69,27 @@
 
 
 (defn keep-distances [masses dguards delta]
-  (println "keep distances" masses)
   (reduce
    (fn [result dguard]
      (let [{:keys [a b d e]} dguard
-           {ta :trans ba :basis :as massa} (get masses a)
-           {tb :trans bb :basis :as massb} (get masses b)
+           {ta :trans ba :basis :as massa} (get result a)
+           {tb :trans bb :basis :as massb} (get result b)
            fa (math2/add-v2 ta ba)
            fb (math2/add-v2 tb bb)
            conn (math2/sub-v2 fa fb)
-           delta (- (math2/length-v2 conn) d)
-           newdelta (if (> e 0.0)
-                      (/ delta e)
-                      delta)
-           newmassa (if (> delta 0.01)
-                      (assoc massa :basis ( math2/add-v2 ba (math2/scale-v2 conn (- 0.5) ) ) )
-                      massa )
-           newmassb (if (> delta 0.01)
-                      (assoc massb :basis ( math2/add-v2 bb (math2/scale-v2 conn 0.5 ) ) )
-                      massb )]
-       (-> result
-           (assoc a newmassa)
-           (assoc b newmassb))))
-   masses
-   dguards))
+           delta (- (math2/length-v2 conn) d)]
+       (if (> (Math/abs delta) 0.01)
+         (let [newdelta (if (> e 0.0)
+                          (/ delta e)
+                          delta)
+               newmassa (assoc massa :basis ( math2/add-v2 ba (math2/resize-v2 conn (- (* delta 0.5)))))
+               newmassb (assoc massb :basis ( math2/add-v2 bb (math2/resize-v2 conn (* delta 0.5 ))))]
+           (-> result
+               (assoc a newmassa)
+               (assoc b newmassb)))
+         result)))
+       masses
+       dguards))
 
 ;; in case of intersection with surface, move mass back to safe distance (radius from surface)
 ;; mirror basis on surface and reduce it with passed distance
@@ -114,7 +111,7 @@
       (let [segments (map second (sort-by first < (get-colliding-surfaces pmass surfaces)))
             {strans :trans sbasis :basis :as segment} (first segments)]
         (if segment
-          (let [newtrans (move-mass-back strans sbasis ptrans pbasis (* 1.5 radius))
+          (let [newtrans (move-mass-back strans sbasis ptrans pbasis (* 2.0 radius))
                 fullsize (math2/length-v2 pbasis)
                 currsize (math2/length-v2 (math2/sub-v2 newtrans ptrans))
                 usedsize (if (< currsize radius)
