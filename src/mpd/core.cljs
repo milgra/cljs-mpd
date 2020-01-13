@@ -66,15 +66,20 @@
 
         drawer (webgl/init)
 
-        points '([(10 200) (400 400) (500 430) (600 0) (990 200)])
+        points '([(10 200) (300 430) (500 430) (700 0) (990 200)])
 
-        masses [(phys2/mass2 200.0 0.0 1.0 1.0 0.99)]
-               
+        massa (phys2/mass2 500.0 300.0 1.0 1.0 0.9)
+        massb (phys2/mass2 400.0 300.0 1.0 1.0 0.9)
+
+        masses {:a massa :b massb}
+        dguards [(phys2/dguard2 :a :b 100.0 0.2)]
+
         surfaces (phys2/surfaces-from-pointlist points)
 
         lines (apply concat (partition 2 1 (apply concat points)))
 
         state {:drawer drawer
+               :dguards dguards
                :masses masses}]
 
     (init-events! keych tchch)
@@ -91,13 +96,16 @@
 
              tchevent (poll! tchch)
 
-             ;; move and collide masses to get new position
-             newmasses (phys2/update-masses (:masses oldstate) surfaces 1.0)
+             newmasses (-> (:masses oldstate)
+                           (phys2/add-gravity 1.0)
+                           (phys2/keep-distances dguards 1.0)
+                           ;;(phys2/keep-angles aguards)
+                           (phys2/move-masses surfaces 1.0))
 
              ;; draw mass points and surfaces
              newdrawer (-> (:drawer oldstate)
                             (webgl/drawlines! projection lines)
-                            (webgl/drawpoints! projection (map :trans newmasses)))]
+                            (webgl/drawpoints! projection (map :trans (vals newmasses))))]
 
          ;; return with new state
          (-> oldstate

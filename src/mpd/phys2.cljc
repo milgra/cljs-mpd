@@ -50,9 +50,8 @@
     (math2/isp-l2-l2 [fx fy] [bx by] [mx my] [mbx mby])))
 
 
-(defn mass2
+(defn mass2 [x y r w e]
   "create basic structure"
-  [x y r w e]
   {:trans [x y]
    :basis [0 0]
    :weight w
@@ -60,7 +59,41 @@
    :elasticity e
    :segmentgroups []})
 
-            
+
+(defn dguard2 [massa massb distance elasticity]
+  "create distance guard"
+  {:a massa
+   :b massb
+   :d distance
+   :e elasticity})
+
+
+(defn keep-distances [masses dguards delta]
+  (println "keep distances" masses)
+  (reduce
+   (fn [result dguard]
+     (let [{:keys [a b d e]} dguard
+           {ta :trans ba :basis :as massa} (get masses a)
+           {tb :trans bb :basis :as massb} (get masses b)
+           fa (math2/add-v2 ta ba)
+           fb (math2/add-v2 tb bb)
+           conn (math2/sub-v2 fa fb)
+           delta (- (math2/length-v2 conn) d)
+           newdelta (if (> e 0.0)
+                      (/ delta e)
+                      delta)
+           newmassa (if (> delta 0.01)
+                      (assoc massa :basis ( math2/add-v2 ba (math2/scale-v2 conn (- 0.5) ) ) )
+                      massa )
+           newmassb (if (> delta 0.01)
+                      (assoc massb :basis ( math2/add-v2 bb (math2/scale-v2 conn 0.5 ) ) )
+                      massb )]
+       (-> result
+           (assoc a newmassa)
+           (assoc b newmassb))))
+   masses
+   dguards))
+
 ;; in case of intersection with surface, move mass back to safe distance (radius from surface)
 ;; mirror basis on surface and reduce it with passed distance
 ;; ??? in case of multiple surfaces revert basis and move mass back to safe distance from all surfaces
@@ -103,28 +136,24 @@
            fbasis
            true
            (inc counter)))))))
-  
 
-(defn moves-masses
+
+(defn move-masses [masses surfaces time]
   "check collisions and move masses to new positions considering collisions"
-  [masses surfaces time]
-  (map (fn [element]
-         (move-mass element surfaces time))
-       masses))
+  (reduce
+   (fn [result [k v]]
+     (let [newmass (move-mass v surfaces time)]
+       (assoc result k newmass)))
+   masses
+   masses))
 
 
-(defn add-gravity
+(defn add-gravity [masses time]
   "adds gravity vector to masspoints basises"
-  [masses gravity time]
-  (map (fn [{[bx by] :basis :as element}]
-         (assoc element :basis [bx (+ by 0.5)]))
-       masses))
-
-
-(defn update-masses [masses surfaces time]
-  "Moves masses to new positions considering collisions"
-  (let [newmasses
-        (-> masses
-            (add-gravity 0.5 time)
-            (moves-masses surfaces time))]
-    newmasses))
+  (reduce
+   (fn [result [k v]]
+     (let [[bx by] (:basis v)
+           newmass (assoc v :basis [bx (+ by 0.5)])]
+       (assoc result k newmass)))
+   masses
+   masses))
