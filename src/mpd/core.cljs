@@ -5,7 +5,6 @@
             [cljs-http.client :as http]
             [cljs.core.async :refer [<! chan put! take! poll!]]
             [cljs.core.async :refer-macros [go]]
-            [mpd.svg :as svg]
             [mpd.phys2 :as phys2]
             [mpd.math4 :as math4]
             [mpd.webgl :as webgl])
@@ -68,11 +67,14 @@
 
         points '([(10 200) (300 430) (500 430) (700 0) (990 200)])
 
-        massa (phys2/mass2 500.0 300.0 1.0 1.0 0.9)
-        massb (phys2/mass2 400.0 300.0 1.0 1.0 0.9)
+        massa (phys2/mass2 250.0 200.0 1.0 1.0 0.9)
+        massb (phys2/mass2 350.0 220.0 1.0 1.0 0.9)
+        massc (phys2/mass2 300.0 200.0 1.0 1.0 0.9)
 
-        masses {:a massa :b massb}
-        dguards [(phys2/dguard2 :a :b 100.0 0.2)]
+        masses {:a massa :b massb :c massc}
+        dguards [(phys2/dguard2 :a :b 100.0 0.0)
+                 (phys2/dguard2 :b :c 100.0 0.0)
+                 (phys2/dguard2 :c :a 100.0 0.9)]
 
         surfaces (phys2/surfaces-from-pointlist points)
 

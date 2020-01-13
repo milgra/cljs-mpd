@@ -18,10 +18,10 @@
 
 
 (defn resize-v2 [[x y] size]
-  (if (> size 0)
+  (if (and (not= size 0) (or (not= x 0) (not= x 0)))
     (let [ratio (/ size (length-v2 [x y]))]
       [(* x ratio) (* y ratio)])
-    [0 0]))
+    [x y]))
 
 
 (defn segment2
