@@ -105,7 +105,7 @@
                (if (< currdelta 0.01)
                  (do
                    (webgl/drawlines! (:drawer currstate) projection lines)
-                   (webgl/drawpoints! (:drawer currstate) projection (map :trans (vals (:masses currstate))))
+                   (webgl/drawpoints! (:drawer currstate) projection (map :p (vals (:masses currstate))))
                    currstate)
                  (let [actualdelta (if (> currdelta 0.99)
                                      0.99

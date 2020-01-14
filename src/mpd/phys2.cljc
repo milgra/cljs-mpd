@@ -5,8 +5,8 @@
 (defn timescale [masses delta]
   "check collisions and move masses to new positions considering collisions"
   (reduce
-   (fn [ result [mid { basis :basis :as mass } ] ]
-        (assoc result mid (assoc mass :basis (math2/scale-v2 basis delta))))
+   (fn [ result [mid { dir :d :as mass } ] ]
+        (assoc result mid (assoc mass :d (math2/scale-v2 dir delta))))
    masses
    masses))
 
@@ -25,20 +25,20 @@
        (recur (rest src) res))))
 
 
-(defn get-colliding-surfaces [trans basis radius surfaces]
-  "collect surfaces crossed by masspoint basis or nearby endpoint"
+(defn get-colliding-surfaces [pos dir radius surfaces]
+  "collect surfaces crossed by masspoint dir or nearby endpoint"
   (reduce
    (fn [result surface]
      (let [isp (math2/isp-v2-v2
-                trans
-                basis
+                pos
+                dir
                 (surface :trans)
                 (surface :basis)
                 radius)
-           end (math2/add-v2 trans basis)
+           end (math2/add-v2 pos dir)
            dst (math2/dist-p2-v2 end (:trans surface) (:basis surface))]
        (if (not= isp nil)
-         (conj result [(math2/dist-p2-p2-cubic trans isp) surface])
+         (conj result [(math2/dist-p2-p2-cubic pos isp) surface])
          (if (< dst radius)
            (conj result [dst surface])
            result))))
@@ -56,13 +56,13 @@
     (math2/isp-l2-l2 [fx fy] [bx by] [mx my] [mbx mby])))
 
 
-(defn mass2 [x y r w e]
+(defn mass2 [x y radius weight elasticity]
   "create basic structure"
-  {:trans [x y]
-   :basis [0 0]
-   :weight w
-   :radius r
-   :elasticity e})
+  {:p [x y] ;; position
+   :d [0 0] ;; direction
+   :w weight
+   :r radius
+   :e elasticity})
 
 
 (defn dguard2 [massa massb distance elasticity]
@@ -77,8 +77,8 @@
   (reduce
    (fn [result dguard]
      (let [{:keys [a b d e]} dguard
-           {ta :trans ba :basis :as massa} (get result a)
-           {tb :trans bb :basis :as massb} (get result b)
+           {ta :p ba :d :as massa} (get result a)
+           {tb :p bb :d :as massb} (get result b)
            fa (math2/add-v2 ta ba)
            fb (math2/add-v2 tb bb)
            conn (math2/sub-v2 fa fb)
@@ -89,8 +89,8 @@
                           dist)
                conna (math2/resize-v2 conn (- (* newdist 0.5)))
                connb (math2/resize-v2 conn (* newdist 0.5 ))
-               newmassa (assoc massa :basis (math2/add-v2 ba conna))
-               newmassb (assoc massb :basis (math2/add-v2 bb connb))]
+               newmassa (assoc massa :d (math2/add-v2 ba conna))
+               newmassb (assoc massb :d (math2/add-v2 bb connb))]
            (-> result
                (assoc a newmassa)
                (assoc b newmassb)))
@@ -112,42 +112,42 @@
   (reduce
    (fn [result aguard]
      (let [{:keys [a b c min max]} aguard
-           {ta :trans ba :basis :as massa} (get result a)
-           {tb :trans bb :basis :as massb} (get result b)
-           {tc :trans bc :basis :as massc} (get result c)
-           fa (math2/add-v2 ta ba)
-           fb (math2/add-v2 tb bb)
-           fc (math2/add-v2 tc bc)
-           fba (math2/sub-v2 fa fb) ;; fb?
-           fbc (math2/sub-v2 fc fb) ;; fb?
-           fbalength (math2/length-v2 fba)
-           fbclength (math2/length-v2 fbc)
-           angleba (math2/angle-x-v2 fba)
-           anglebc (math2/angle-x-v2 fbc)
-           anglere (math2/normalize-angle (- anglebc angleba))] ;; ccw angle difference 
+           {pa :p da :d :as massa} (get result a)
+           {pb :p db :d :as massb} (get result b)
+           {pc :p dc :d :as massc} (get result c)
+           fa (math2/add-v2 pa da) ;; final a
+           fb (math2/add-v2 pb db) ;; final b
+           fc (math2/add-v2 pc dc) ;; final c
+           fda (math2/sub-v2 fa fb)
+           fdc (math2/sub-v2 fc fb)
+           fdalength (math2/length-v2 fda)
+           fdclength (math2/length-v2 fdc)
+           angleda (math2/angle-x-v2 fda)
+           angledc (math2/angle-x-v2 fdc)
+           anglere (math2/normalize-angle (- angledc angleda))] ;; ccw angle difference 
        (if (or (< anglere min) (> anglere max))
          (let [diffmin (math2/normalize-angle (- min anglere)) ;; ccw delta
                diffmax (math2/normalize-angle (- anglere max)) ;; ccw delta
                ;; using smaller angle difference
-               newangleba (if (< diffmin diffmax)
-                            (- angleba ( * diffmin 0.5 ) )
-                            (+ angleba ( * diffmax 0.5 ) ))
-               newanglebc (if (< diffmin diffmax)
-                            (+ anglebc ( * diffmin 0.5 ) )
-                            (- anglebc ( * diffmax 0.5 ) ))
-               ;; calculate rotated ba and bc
-               nbax ( + (tb 0) (* (Math/cos newangleba) fbalength ))
-               nbay ( + (tb 1) (* (Math/sin newangleba) fbalength ))
-               nbcx ( + (tb 0) (* (Math/cos newanglebc) fbclength ))
-               nbcy ( + (tb 1) (* (Math/sin newanglebc) fbclength ))
-               ;; calculate forces. b will move backwards because we rotate ba and bc around their centers
-               force_a (math2/scale-v2 (math2/sub-v2 [nbax nbay] fa) 0.4)
-               force_c (math2/scale-v2 (math2/sub-v2 [nbcx nbcy] fc) 0.4)
+               newangleda (if (< diffmin diffmax)
+                            (- angleda ( * diffmin 0.5 ) )
+                            (+ angleda ( * diffmax 0.5 ) ))
+               newangledc (if (< diffmin diffmax)
+                            (+ angledc ( * diffmin 0.5 ) )
+                            (- angledc ( * diffmax 0.5 ) ))
+               ;; calculate rotated da and dc
+               ndax ( + (pb 0) (* (Math/cos newangleda) fdalength ))
+               nday ( + (pb 1) (* (Math/sin newangleda) fdalength ))
+               ndcx ( + (pb 0) (* (Math/cos newangledc) fdclength ))
+               ndcy ( + (pb 1) (* (Math/sin newangledc) fdclength ))
+               ;; calculate forces. b will move backwards because we rotate da and dc around their centers
+               force_a (math2/scale-v2 (math2/sub-v2 [ndax nday] fa) 0.4)
+               force_c (math2/scale-v2 (math2/sub-v2 [ndcx ndcy] fc) 0.4)
                force_b (math2/scale-v2 (math2/add-v2 force_a force_c) -0.1)
-               ;; update basises
-               newmassa (assoc massa :basis ( math2/add-v2 ba force_a))
-               newmassb (assoc massb :basis ( math2/add-v2 bb force_b))
-               newmassc (assoc massc :basis ( math2/add-v2 bc force_c))]
+               ;; update dires
+               newmassa (assoc massa :d ( math2/add-v2 da force_a))
+               newmassb (assoc massb :d ( math2/add-v2 db force_b))
+               newmassc (assoc massc :d ( math2/add-v2 dc force_c))]
            (-> result
                (assoc a newmassa)
                (assoc b newmassb)
@@ -157,48 +157,35 @@
    aguards))
 
 ;; in case of intersection with surface, move mass back to safe distance (radius from surface)
-;; mirror basis on surface and reduce it with passed distance
-;; ??? in case of multiple surfaces revert basis and move mass back to safe distance from all surfaces
-;; repeat while basis exists
-;; if basis is smaller than radius stop movement
+;; mirror dir on surface and reduce it with passed distance
+;; if dir is smaller than radius stop movement
 
-(defn move-mass [{:keys [trans basis radius elasticity] :as mass}
+(defn move-mass [{:keys [p d r e] :as mass}
                  surfaces]
-  "check collision of mass basis with all surfaces, moves mass to next iteration point based on time"
-  (loop [ptrans trans
-         pbasis basis
-         fbasis basis
-         finished false
-         counter 0]
-    (if finished
+  "check collision of mass dir with all surfaces, moves mass to next iteration point based on time"
+  (loop [ppos p ;; previous position
+         pdir d ;; previous direction
+         fdir d ;; final direction
+         done false ;; movement done
+         iter 0 ] ;; iterations
+    (if done
       (-> mass
-          (assoc :trans ptrans)
-          (assoc :basis fbasis))          
-      (let [segments (map second (sort-by first < (get-colliding-surfaces ptrans pbasis radius surfaces)))
+          (assoc :p ppos)
+          (assoc :d fdir))          
+      (let [segments (map second (sort-by first < (get-colliding-surfaces ppos pdir r surfaces)))
             {strans :trans sbasis :basis :as segment} (first segments)]
         (if segment
-          (let [newtrans (move-mass-back strans sbasis ptrans pbasis (* 2.0 radius))
-                fullsize (math2/length-v2 pbasis)
-                currsize (math2/length-v2 (math2/sub-v2 newtrans ptrans))
-                usedsize (if (< currsize radius)
-                           radius
+          (let [newpos (move-mass-back strans sbasis ppos pdir (* 2.0 r))
+                fullsize (math2/length-v2 pdir)
+                currsize (math2/length-v2 (math2/sub-v2 newpos ppos))
+                usedsize (if (< currsize r)
+                           r
                            (- fullsize currsize))
-                newfbasis (math2/scale-v2 (math2/mirror-v2-bases sbasis fbasis) elasticity)
-                newbasis (math2/resize-v2 newfbasis usedsize)]
-
-            (recur
-             newtrans
-             newbasis
-             newfbasis
-             (or (> counter 4) (not segment))
-             (inc counter)))
-          
-          (recur
-           (math2/add-v2 ptrans pbasis)
-           pbasis
-           fbasis
-           true
-           (inc counter)))))))
+                newfdir (math2/scale-v2 (math2/mirror-v2-bases sbasis fdir) e)
+                newdir (math2/resize-v2 newfdir usedsize)
+                ready (or (> iter 4) (not segment))]
+            (recur newpos newdir newfdir ready (inc iter)))
+          (recur (math2/add-v2 ppos pdir) pdir fdir true (inc iter)))))))
 
 
 (defn move-masses [masses surfaces]
@@ -212,11 +199,11 @@
 
 
 (defn add-gravity [masses gravity]
-  "adds gravity vector to masspoints basises"
+  "adds gravity vector to masspoints dires"
   (reduce
    (fn [result [mid mass]]
-     (let [basis (:basis mass)
-           newmass (assoc mass :basis (math2/add-v2 basis gravity))]
+     (let [dir (:d mass)
+           newmass (assoc mass :d (math2/add-v2 dir gravity))]
        (assoc result mid newmass)))
    masses
    masses))
