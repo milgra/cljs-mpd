@@ -1,5 +1,3 @@
-finish fragmenting
-distance guard
-angle guard
 add time fragment handling
-demos
+interaction with left click
+demos, release

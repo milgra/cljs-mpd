@@ -67,15 +67,25 @@
 
         points '([(10 200) (300 430) (500 430) (700 0) (990 200)])
 
-        massa (phys2/mass2 250.0 200.0 1.0 1.0 0.9)
-        massb (phys2/mass2 350.0 200.0 1.0 1.0 0.9)
-        massc (phys2/mass2 300.0 150.0 1.0 1.0 0.9)
+        massa (phys2/mass2 210.0 200.0 1.0 1.0 0.9)
+        massb (phys2/mass2 310.0 200.0 1.0 1.0 0.9)
+        massc (phys2/mass2 410.0 200.0 1.0 1.0 0.9)
 
-        masses {:a massa :b massb :c massc}
+        ;;masses {:a massa :b massb :c massc}
+
+        masses (reduce
+                (fn [result number]
+                  (let [id (keyword (str number))
+                        mass (phys2/mass2 (rand 900) (rand 400) 1.0 1.0 0.9)]
+                   (assoc result id mass)))
+                {}
+                (range 0 100))
         
         dguards [(phys2/dguard2 :a :b 100.0 0.8)
-                 (phys2/dguard2 :b :c 100.0 0.8)
-                 (phys2/dguard2 :c :a 100.0 0.8)]
+                 (phys2/dguard2 :b :c 100.0 0.8)]
+                 ;;(phys2/dguard2 :c :a 100.0 0.8)]
+
+        aguards [(phys2/aguard2 :a :b :c (/ Math/PI 2) Math/PI)]
 
         surfaces (phys2/surfaces-from-pointlist points)
 
@@ -101,8 +111,8 @@
 
              newmasses (-> (:masses oldstate)
                            (phys2/add-gravity 1.0)
-                           (phys2/keep-distances dguards 1.0)
                            ;;(phys2/keep-angles aguards)
+                           ;;(phys2/keep-distances dguards 1.0)
                            (phys2/move-masses surfaces 1.0))
 
              ;; draw mass points and surfaces

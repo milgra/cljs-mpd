@@ -91,6 +91,64 @@
        masses
        dguards))
 
+
+(defn aguard2 [massa massb massc minangle maxangle]
+  "create angle guard"
+  {:a massa
+   :b massb
+   :c massc
+   :min minangle
+   :max maxangle})
+
+
+(defn keep-angles [masses aguards]
+  (reduce
+   (fn [result aguard]
+     (let [{:keys [a b c min max]} aguard
+           {ta :trans ba :basis :as massa} (get result a)
+           {tb :trans bb :basis :as massb} (get result b)
+           {tc :trans bc :basis :as massc} (get result c)
+           fa (math2/add-v2 ta ba)
+           fb (math2/add-v2 tb bb)
+           fc (math2/add-v2 tc bc)
+           fba (math2/sub-v2 fa tb) ;; fb?
+           fbc (math2/sub-v2 fc tb) ;; fb?
+           fbalength (math2/length-v2 fba)
+           fbclength (math2/length-v2 fbc)
+           angleba (math2/angle-x-v2 fba)
+           anglebc (math2/angle-x-v2 fbc)
+           anglere (math2/normalize-angle (- anglebc angleba))] ;; ccw angle difference 
+       (if (or (< anglere min) (> anglere max))
+         (let [diffmin (math2/normalize-angle (- min anglere)) ;; ccw delta
+               diffmax (math2/normalize-angle (- anglere max)) ;; ccw delta
+               ;; using smaller angle difference
+               newangleba (if (< diffmin diffmax)
+                            (- angleba ( * diffmin 0.5 ) )
+                            (+ angleba ( * diffmax 0.5 ) ))
+               newanglebc (if (< diffmin diffmax)
+                            (+ anglebc ( * diffmin 0.5 ) )
+                            (- anglebc ( * diffmax 0.5 ) ))
+               ;; calculate rotated ba and bc
+               nbax ( + (tb 0) (* (Math/cos newangleba) fbalength ))
+               nbay ( + (tb 1) (* (Math/sin newangleba) fbalength ))
+               nbcx ( + (tb 0) (* (Math/cos newanglebc) fbclength ))
+               nbcy ( + (tb 1) (* (Math/sin newanglebc) fbclength ))
+               ;; calculate forces. b will move backwards because we rotate ba and bc around their centers
+               force_a (math2/scale-v2 (math2/sub-v2 [nbax nbay] fa) 0.5 )
+               force_c (math2/scale-v2 (math2/sub-v2 [nbcx nbcy] fc) 0.5 )
+               force_b (math2/scale-v2 (math2/add-v2 force_a force_c) -0.5)
+               ;; update basises
+               newmassa (assoc massa :basis ( math2/add-v2 ba force_a))
+               newmassb (assoc massb :basis ( math2/add-v2 bb force_b))
+               newmassc (assoc massc :basis ( math2/add-v2 bc force_c))]
+           (-> result
+               (assoc a newmassa)
+               (assoc b newmassb)
+               (assoc c newmassc)))
+         result)))
+   masses
+   aguards))
+
 ;; in case of intersection with surface, move mass back to safe distance (radius from surface)
 ;; mirror basis on surface and reduce it with passed distance
 ;; ??? in case of multiple surfaces revert basis and move mass back to safe distance from all surfaces

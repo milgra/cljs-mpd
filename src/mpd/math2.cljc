@@ -1,16 +1,16 @@
 (ns mpd.math2)
 
 
-(defn length-v2 [ [ax ay] ]
-  (Math/sqrt (+ (* ax ax) (* ay ay))))
+(defn add-v2 [[ax ay][bx by]]
+  [(+ ax bx) (+ ay by)])
 
 
 (defn sub-v2 [ [ax ay] [bx by] ]
   [(- ax bx) (- ay by)])
 
 
-(defn add-v2 [[ax ay][bx by]]
-  [(+ ax bx) (+ ay by)])
+(defn length-v2 [ [ax ay] ]
+  (Math/sqrt (+ (* ax ax) (* ay ay))))
 
 
 (defn scale-v2 [ [x y] ratio ]
@@ -22,6 +22,21 @@
     (let [ratio (/ size (length-v2 [x y]))]
       [(* x ratio) (* y ratio)])
     [x y]))
+
+
+(defn angle-x-v2 [[x y]]
+  (Math/atan2 y x))
+
+
+(defn angle-v2-v2 [[a b][c d]]
+  (Math/acos (/
+              (+ (* a c)(* b d))
+              (* (length-v2 [a b]) (length-v2 [c d])))))
+
+(defn normalize-angle [angle]
+  (if (< angle 0)
+    (+ angle Math/PI Math/PI)
+    angle))
 
 
 (defn segment2
