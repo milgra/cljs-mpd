@@ -85,7 +85,9 @@
 
 (defn drawlines! [ {:keys [context shader line_buffer location_pos location_col] :as state} projection lines ]
   "draw lines"
-    
+
+  (buffers/clear-color-buffer context 0.0 0.0 0.0 1.0)
+
   (.bindBuffer context buffer-object/array-buffer line_buffer)
   
   (.bufferData context

@@ -13,9 +13,11 @@
 
 (defn animate [state draw-fn]
   "main runloop, syncs animation to display refresh rate"
-  (letfn [(loop [oldstate frame]
+  (letfn [(loop [prestate frame]
             (fn [time]
-              (let [newstate (draw-fn oldstate frame time)]
+              (let [newstate (if (> time 0)
+                               (draw-fn prestate frame time)
+                               prestate)]
                 (.requestAnimationFrame
                  js/window
                  (loop newstate (inc frame))))))]
@@ -29,17 +31,7 @@
         (set! (. canvas -height) (. js/window -innerHeight))))
 
 
-(defn init-events! [keych tchch]
-
-    (events/listen
-     js/document
-     EventType.KEYDOWN
-     (fn [event] (put! keych {:code (.-keyCode event) :value true})))
-
-    (events/listen
-     js/document
-     EventType.KEYUP
-     (fn [event] (put! keych {:code (.-keyCode event) :value false})))
+(defn init-events! [tchch]
 
     (events/listen                          
      js/document
@@ -59,31 +51,30 @@
 
 (defn main []
   "entering point"
-  (let [keych (chan)
-
-        tchch (chan)
+  (let [tchch (chan)
 
         drawer (webgl/init)
 
         points '([(10 200) (300 430) (500 430) (700 0) (990 200)])
 
-        massa (phys2/mass2 210.0 200.0 1.0 1.0 0.9)
-        massb (phys2/mass2 310.0 200.0 1.0 1.0 0.9)
-        massc (phys2/mass2 410.0 200.0 1.0 1.0 0.9)
+        massa (phys2/mass2 210.0 100.0 1.0 1.0 0.7)
+        massb (phys2/mass2 210.0 200.0 1.0 1.0 0.7)
+        massc (phys2/mass2 310.0 200.0 1.0 1.0 0.7)
 
-        ;;masses {:a massa :b massb :c massc}
+        masses {:a massa :b massb :c massc}
 
-        masses (reduce
+        massesb (reduce
                 (fn [result number]
                   (let [id (keyword (str number))
-                        mass (phys2/mass2 (rand 900) (rand 400) 1.0 1.0 0.9)]
-                   (assoc result id mass)))
+                        mass (phys2/mass2 (rand 900) (rand 400) 1.0 1.0 0.8)]
+                    (assoc result id mass)))
                 {}
                 (range 0 100))
         
         dguards [(phys2/dguard2 :a :b 100.0 0.8)
-                 (phys2/dguard2 :b :c 100.0 0.8)]
-                 ;;(phys2/dguard2 :c :a 100.0 0.8)]
+                 (phys2/dguard2 :b :c 100.0 0.8)
+                 (phys2/dguard2 :c :a 100.0 0.8)
+                 ]
 
         aguards [(phys2/aguard2 :a :b :c (/ Math/PI 2) Math/PI)]
 
@@ -91,40 +82,54 @@
 
         lines (apply concat (partition 2 1 (apply concat points)))
 
+        projection (math4/proj_ortho 0.0 1000.0 500.0 0.0 -1.0 1.0)
+
         state {:drawer drawer
                :dguards dguards
-               :masses masses}]
+               :masses masses
+               :faszom "faszom"
+               :time 0}]
 
-    (init-events! keych tchch)
+    (init-events! tchch)
     
     (resize-context!)
     
     (animate
      state
-     (fn [oldstate frame time]
-       (if (= 0 (mod frame 1))
-       (let [projection (math4/proj_ortho 0.0 1000.0 500.0 0.0 -1.0 1.0)
+     (fn [{ pretime :time :as prestate} frame time]
+       (if (> pretime 0)
+         (if (= 0 (mod frame 1))
+           (let [delta (/ (- time pretime) 16.8)]
+             (loop [currdelta delta
+                    currstate prestate]
+               (if (< currdelta 0.01)
+                 (do
+                   (webgl/drawlines! (:drawer currstate) projection lines)
+                   (webgl/drawpoints! (:drawer currstate) projection (map :trans (vals (:masses currstate))))
+                   currstate)
+                 (let [actualdelta (if (> currdelta 0.99)
+                                     0.99
+                                     currdelta)
+ 
+                       tchevent (poll! tchch)
+                       
+                       newmasses (-> (:masses currstate)
+                                     (phys2/add-gravity [0.0 0.5])
+                                     (phys2/timescale actualdelta)
+                                     ;;(phys2/keep-angles aguards)
+                                     (phys2/keep-distances dguards)
+                                     (phys2/move-masses surfaces)
+                                     (phys2/timescale (/ 1.0 actualdelta)))
+                       
+                       newstate (-> currstate
+                                    (assoc :time time)
+                                    (assoc :masses newmasses))]
 
-             keyevent (poll! keych)
-
-             tchevent (poll! tchch)
-
-             newmasses (-> (:masses oldstate)
-                           (phys2/add-gravity 1.0)
-                           ;;(phys2/keep-angles aguards)
-                           ;;(phys2/keep-distances dguards 1.0)
-                           (phys2/move-masses surfaces 1.0))
-
-             ;; draw mass points and surfaces
-             newdrawer (-> (:drawer oldstate)
-                            (webgl/drawlines! projection lines)
-                            (webgl/drawpoints! projection (map :trans (vals newmasses))))]
-
-         ;; return with new state
-         (-> oldstate
-             (assoc :masses newmasses)
-             (assoc :drawer newdrawer)))
-       oldstate)
-       ))))
+                   ;;(println "currdelta actualdelta" currdelta actualdelta)
+                   (recur (- currdelta actualdelta) newstate)))))
+          prestate)
+         (assoc prestate :time time)))
+     )))
 
 (main)
+         

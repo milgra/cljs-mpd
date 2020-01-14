@@ -1,3 +1,4 @@
 add time fragment handling
 interaction with left click
 demos, release
+tests
