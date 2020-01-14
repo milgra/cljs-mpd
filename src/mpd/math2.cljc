@@ -40,10 +40,10 @@
 
 
 (defn segment2
-  "creates segment 2d structure"
+  "creates segment 2d structure as [trans basis]"
   [[x y][ z v]]
-  {:trans [x y]
-   :basis [(- z x) (- v y)]})
+  {:t [x y]
+   :b [(- z x) (- v y)]})
 
 
 (defn isp-l2-l2 [[tax tay][bax bay][tbx tby][bbx bby]]

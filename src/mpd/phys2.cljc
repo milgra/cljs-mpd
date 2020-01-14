@@ -5,7 +5,7 @@
 (defn timescale [masses delta]
   "check collisions and move masses to new positions considering collisions"
   (reduce
-   (fn [ result [mid { dir :d :as mass } ] ]
+   (fn [ result [mid { dir :d :as mass }]]
         (assoc result mid (assoc mass :d (math2/scale-v2 dir delta))))
    masses
    masses))
@@ -32,11 +32,11 @@
      (let [isp (math2/isp-v2-v2
                 pos
                 dir
-                (surface :trans)
-                (surface :basis)
+                (surface :t)
+                (surface :b)
                 radius)
            end (math2/add-v2 pos dir)
-           dst (math2/dist-p2-v2 end (:trans surface) (:basis surface))]
+           dst (math2/dist-p2-v2 end (:t surface) (:b surface))]
        (if (not= isp nil)
          (conj result [(math2/dist-p2-p2-cubic pos isp) surface])
          (if (< dst radius)
@@ -173,7 +173,7 @@
           (assoc :p ppos)
           (assoc :d fdir))          
       (let [segments (map second (sort-by first < (get-colliding-surfaces ppos pdir r surfaces)))
-            {strans :trans sbasis :basis :as segment} (first segments)]
+            {strans :t sbasis :b :as segment} (first segments)]
         (if segment
           (let [newpos (move-mass-back strans sbasis ppos pdir (* 2.0 r))
                 fullsize (math2/length-v2 pdir)
