@@ -137,8 +137,7 @@
         dguards [(phys2/dguard2 :a :b 100.0 0.8)
                  (phys2/dguard2 :b :c 100.0 0.8)
                  (phys2/dguard2 :c :d 100.0 0.8)
-                 (phys2/dguard2 :d :e 100.0 0.8)
-                 ]
+                 (phys2/dguard2 :d :e 100.0 0.8)]
 
         aguards [];;(phys2/aguard2 :a :b :c (/ Math/PI 2) Math/PI)]
 

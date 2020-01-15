@@ -36,10 +36,7 @@
 
 (defn draw-world [state]
   "draws surfaces and masspoints"
-  (let [
-        ;;projection (math4/proj_ortho 0.0 1000.0 500.0 0.0 -1.0 1.0)
-
-        projection (math4/proj_ortho
+  (let [projection (math4/proj_ortho
                     0
                     (.-innerWidth js/window)
                     (.-innerHeight js/window)
@@ -47,7 +44,20 @@
                     -10.0
                     10.0)
         
-        scene (:scene state)]
+        scene (:scene state)
+
+        masses (:masses scene)
+        dguards (:dguards scene)
+
+        nlines (reduce
+                (fn [result {a :a b :b :as dguard}]
+                  (let [{pa :p :as massa} (masses a)
+                        {pb :p :as massb} (masses b)]
+                  (conj result pa pb)))
+                []
+                dguards)]
+
+    (when (> (count nlines) 0) (webgl/drawlines! (:drawer state) projection nlines))
     (webgl/drawlines! (:drawer state) projection (:lines scene))
     (webgl/drawpoints! (:drawer state) projection (map :p (vals (:masses scene))))))
 
