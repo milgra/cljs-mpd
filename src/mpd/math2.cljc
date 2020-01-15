@@ -5,15 +5,15 @@
   [(+ ax bx) (+ ay by)])
 
 
-(defn sub-v2 [ [ax ay] [bx by] ]
+(defn sub-v2 [[ax ay][bx by]]
   [(- ax bx) (- ay by)])
 
 
-(defn length-v2 [ [ax ay] ]
+(defn length-v2 [[ax ay]]
   (Math/sqrt (+ (* ax ax) (* ay ay))))
 
 
-(defn scale-v2 [ [x y] ratio ]
+(defn scale-v2 [[x y] ratio]
   [(* x ratio) (* y ratio)])
 
 
@@ -32,6 +32,7 @@
   (Math/acos (/
               (+ (* a c)(* b d))
               (* (length-v2 [a b]) (length-v2 [c d])))))
+
 
 (defn normalize-angle [angle]
   (if (< angle 0)
@@ -81,7 +82,7 @@
 
 
 (defn dist-p2-l2 [[px py] [tx ty] [bx by]]
-  "calculate distance of point and vector
+  "calculate distance of point and line
    https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line #Line defined by two points"
   (let [cx (+ tx bx)
         cy (+ ty by)]

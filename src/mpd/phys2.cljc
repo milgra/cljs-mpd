@@ -52,7 +52,6 @@
         [dx dy] [(- mx cx)(- my cy)]
         [nx ny] (math2/resize-v2 [dx dy] radius)
         [fx fy] (math2/add-v2 [cx cy] [nx ny])]
-    ;;(println "mx" mx "my" my "bx" bx "by" by "cx" cx "cy" cy "dx" dx "dy" dy "nx" nx "ny" ny "fx" fx "fy" fy)
     (math2/isp-l2-l2 [fx fy] [bx by] [mx my] [mbx mby])))
 
 
@@ -84,9 +83,7 @@
            conn (math2/sub-v2 fa fb)
            dist (- (math2/length-v2 conn) d)]
        (if (> (Math/abs dist) 0.01)
-         (let [newdist (if (> e 0.0)
-                          (/ dist e)
-                          dist)
+         (let [newdist (if (> e 0.0) (/ dist e) dist)
                conna (math2/resize-v2 conn (- (* newdist 0.5)))
                connb (math2/resize-v2 conn (* newdist 0.5 ))
                newmassa (assoc massa :d (math2/add-v2 ba conna))
