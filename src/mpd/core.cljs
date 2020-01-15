@@ -45,7 +45,7 @@
                     10.0)
         
         scene (:scene state)
-
+        drawer (:drawer state)
         masses (:masses scene)
         dguards (:dguards scene)
 
@@ -57,9 +57,10 @@
                 []
                 dguards)]
 
-    (when (> (count nlines) 0) (webgl/drawlines! (:drawer state) projection nlines))
-    (webgl/drawlines! (:drawer state) projection (:lines scene))
-    (webgl/drawpoints! (:drawer state) projection (map :p (vals (:masses scene))))))
+    (webgl/clear drawer)
+    (when (> (count nlines) 0) (webgl/drawlines! drawer projection nlines))
+    (webgl/drawlines! drawer projection (:lines scene))
+    (webgl/drawpoints! drawer projection (map :p (vals (:masses scene))))))
 
 
 (defn update-world [state delta]

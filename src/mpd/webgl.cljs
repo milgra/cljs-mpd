@@ -82,7 +82,8 @@
      :location_pos location_pos
      :location_col location_col}))
 
-(defn clear[]
+
+(defn clear[ {context :context} ]
   (buffers/clear-color-buffer context 0.0 0.0 0.0 1.0))
 
 
