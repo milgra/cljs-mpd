@@ -1,4 +1,4 @@
-(ns ^:figwheel-hooks mpd.core
+(ns ^:figwheel-hooks demo.core
   (:require [goog.dom :as gdom]
             [goog.events :as events]
             [tubax.core :refer [xml->clj]]
@@ -7,9 +7,9 @@
             [cljs.core.async :refer-macros [go]]
             [cljs.js :as cljs]
             [mpd.phys2 :as phys2]
-            [mpd.math4 :as math4]
-            [mpd.webgl :as webgl]
-            [mpd.scenes :as scenes])
+            [demo.math4 :as math4]
+            [demo.webgl :as webgl]
+            [demo.scenes :as scenes])
   (:import [goog.events EventType]))
   
 

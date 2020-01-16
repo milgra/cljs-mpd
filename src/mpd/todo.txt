@@ -1,5 +1,0 @@
-release
-draw dguards, basises
-islands in the middle of the scene
-refine proximity/collosion to calm particles
-tests

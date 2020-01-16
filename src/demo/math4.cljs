@@ -1,4 +1,4 @@
-(ns mpd.math4)
+(ns demo.math4)
 
 
 (defn proj_ortho [ left right bottom top near far ]

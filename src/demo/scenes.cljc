@@ -1,4 +1,4 @@
-(ns mpd.scenes
+(ns demo.scenes
   (:require [mpd.phys2 :as phys2]))
 
 (defn scene0 [w h]
