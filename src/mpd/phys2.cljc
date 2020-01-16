@@ -11,12 +11,32 @@
    :e elasticity})
 
 
-(defn dguard2 [massa massb distance elasticity]
+(defn dguard2 [masses {wa :w :as massa} {wb :w :as massb} distance elasticity]
   "create distance guard"
-  {:a massa
-   :b massb
-   :d distance
-   :e elasticity})
+  (let [{wa :w} (masses massa)
+        {wb :w} (masses massb)
+        sum (+ wa wb)]
+    {:a massa
+     :b massb
+     :d distance
+     :e elasticity
+     :ra (/ wa sum) ;; weight ratio of mass a
+     :rb (/ wb sum) ;; weight ratio of mass b
+     }))
+
+
+(defn aguard2 [masses {wa :w :as massa} massb {wc :w :as massc} minangle maxangle]
+  "create angle guard"
+  (let [{wa :w} (masses massa)
+        {wc :w} (masses massb)
+        sum (+ wa wc)]
+    {:a massa
+     :b massb
+     :c massc
+     :ra (/ wa sum)
+     :rb (/ wc sum)
+     :min minangle
+     :max maxangle}))
 
 
 (defn segment2
@@ -82,7 +102,7 @@
 (defn keep-distances [masses dguards]
   (reduce
    (fn [result dguard]
-     (let [{:keys [a b d e]} dguard
+     (let [{:keys [a b d e ra rb]} dguard
            {ta :p ba :d :as massa} (get result a)
            {tb :p bb :d :as massb} (get result b)
            fa (math2/add-v2 ta ba)
@@ -91,8 +111,8 @@
            dist (- (math2/length-v2 conn) d)]
        (if (> (Math/abs dist) 0.01)
          (let [newdist (if (> e 0.0) (/ dist e) dist)
-               conna (math2/resize-v2 conn (- (* newdist 0.5)))
-               connb (math2/resize-v2 conn (* newdist 0.5 ))
+               conna (math2/resize-v2 conn (- (* newdist ra)))
+               connb (math2/resize-v2 conn (* newdist rb))
                newmassa (assoc massa :d (math2/add-v2 ba conna))
                newmassb (assoc massb :d (math2/add-v2 bb connb))]
            (-> result
@@ -103,19 +123,10 @@
        dguards))
 
 
-(defn aguard2 [massa massb massc minangle maxangle]
-  "create angle guard"
-  {:a massa
-   :b massb
-   :c massc
-   :min minangle
-   :max maxangle})
-
-
 (defn keep-angles [masses aguards]
   (reduce
    (fn [result aguard]
-     (let [{:keys [a b c min max]} aguard
+     (let [{:keys [a b c ra rc min max]} aguard
            {pa :p da :d :as massa} (get result a)
            {pb :p db :d :as massb} (get result b)
            {pc :p dc :d :as massc} (get result c)
@@ -134,11 +145,11 @@
                diffmax (math2/normalize-angle (- anglere max)) ;; ccw delta
                ;; using smaller angle difference
                newangleda (if (< diffmin diffmax)
-                            (- angleda ( * diffmin 0.5 ) )
-                            (+ angleda ( * diffmax 0.5 ) ))
+                            (- angleda ( * diffmin ra ) )
+                            (+ angleda ( * diffmax ra ) ))
                newangledc (if (< diffmin diffmax)
-                            (+ angledc ( * diffmin 0.5 ) )
-                            (- angledc ( * diffmax 0.5 ) ))
+                            (+ angledc ( * diffmin rc ) )
+                            (- angledc ( * diffmax rc ) ))
                ;; calculate rotated da and dc
                ndax ( + (pb 0) (* (Math/cos newangleda) fdalength ))
                nday ( + (pb 1) (* (Math/sin newangleda) fdalength ))

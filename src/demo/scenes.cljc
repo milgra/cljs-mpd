@@ -6,8 +6,10 @@
   (let [points (let [stepping (/ w 20.0)]
                  [(for [x (range 0 21)]
                     (cond
-                      (= x 0) [stepping 0]
-                      (= x 20) [(- w stepping) 0]
+                      (= x 0) [0 0]
+                      (= x 1) [0 (- h (rand 200))]
+                      (= x 19) [w (- h (rand 200))]
+                      (= x 20) [w 0]
                       :default [( * x stepping ) (- h (rand 200))]))])
 
         masses (reduce
@@ -53,9 +55,9 @@
         dguards (reduce
                  (fn [result [a b c]]
                    (conj result
-                         (phys2/dguard2 (keyword (str a)) (keyword (str b)) 100.0 0.9)
-                         (phys2/dguard2 (keyword (str b)) (keyword (str c)) 100.0 0.9)
-                         (phys2/dguard2 (keyword (str c)) (keyword (str a)) 100.0 0.9)))
+                         (phys2/dguard2 masses (keyword (str a)) (keyword (str b)) 100.0 0.9)
+                         (phys2/dguard2 masses (keyword (str b)) (keyword (str c)) 100.0 0.9)
+                         (phys2/dguard2 masses (keyword (str c)) (keyword (str a)) 100.0 0.9)))
                  []
                  (partition 3 3 (range 0 16)))
 
@@ -93,12 +95,12 @@
         dguards (reduce
                  (fn [result [a b c d]]
                    (conj result
-                         (phys2/dguard2 (keyword (str a)) (keyword (str b)) 100.0 0.9)
-                         (phys2/dguard2 (keyword (str b)) (keyword (str c)) 100.0 0.9)
-                         (phys2/dguard2 (keyword (str c)) (keyword (str d)) 100.0 0.9)
-                         (phys2/dguard2 (keyword (str d)) (keyword (str a)) 100.0 0.9)
-                         (phys2/dguard2 (keyword (str a)) (keyword (str c)) 141.42 0.9)
-                         (phys2/dguard2 (keyword (str b)) (keyword (str d)) 141.42 0.9)))
+                         (phys2/dguard2 masses (keyword (str a)) (keyword (str b)) 100.0 0.9)
+                         (phys2/dguard2 masses (keyword (str b)) (keyword (str c)) 100.0 0.9)
+                         (phys2/dguard2 masses (keyword (str c)) (keyword (str d)) 100.0 0.9)
+                         (phys2/dguard2 masses (keyword (str d)) (keyword (str a)) 100.0 0.9)
+                         (phys2/dguard2 masses (keyword (str a)) (keyword (str c)) 141.42 0.9)
+                         (phys2/dguard2 masses (keyword (str b)) (keyword (str d)) 141.42 0.9)))
                  []
                  (partition 4 4 (range 0 16)))
 
@@ -134,10 +136,10 @@
 
         masses {:a massa :b massb :c massc :d massd :e masse}
         
-        dguards [(phys2/dguard2 :a :b 100.0 0.8)
-                 (phys2/dguard2 :b :c 100.0 0.8)
-                 (phys2/dguard2 :c :d 100.0 0.8)
-                 (phys2/dguard2 :d :e 100.0 0.8)]
+        dguards [(phys2/dguard2 masses :a :b 100.0 0.8)
+                 (phys2/dguard2 masses :b :c 100.0 0.8)
+                 (phys2/dguard2 masses :c :d 100.0 0.8)
+                 (phys2/dguard2 masses :d :e 100.0 0.8)]
 
         aguards [];;(phys2/aguard2 :a :b :c (/ Math/PI 2) Math/PI)]
 

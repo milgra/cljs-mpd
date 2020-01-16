@@ -18,9 +18,7 @@ Mass Point Dynamics Engine for ClojureScript
 
 ## Todo
 
-* bottom correction of demos
 * 800 * 600 fixed size
 * islands in the middle of the scene
-* consider weight in distance and angle guards
 * refine proximity/collosion to calm particles
 * write tests
