@@ -1,7 +1,7 @@
 # cljs-mpd
 Mass Point Dynamics Engine for ClojureScript
 
-![screenshot](screenshot.png)(https://milgra.github.io/cljs-mpd/index.html)
+![screenshot](screenshot.png)
 
 [Live Demo](https://milgra.github.io/cljs-mpd/index.html)
 
