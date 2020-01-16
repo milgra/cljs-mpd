@@ -3,20 +3,20 @@ Mass Point Dynamics Engine for ClojureScript
 
 [Live Demo](https://milgra.github.io/cljs-mpd/index.html)
 
-# Features
+## Features
 
-Adaptive time stepping
-Mass points with radius, weight and elasticity
-Distance guards for rigid body simulation
-Angle guards for skeleton simulation
+* Adaptive time stepping
+* Mass points with radius, weight and elasticity
+* Distance guards for rigid body simulation
+* Angle guards for skeleton simulation
 
-# Usage
+## Usage
 
-Copy src/mpd to your project src folder
-Check out scenes.cljs how to set up a scene
-Check out core.cljs/main how to iterate through phy2 functions
+* Copy src/mpd to your project src folder
+* Check out scenes.cljs how to set up a scene
+* Check out core.cljs/main how to iterate through phy2 functions
 
-# Todo
+## Todo
 
 * bottom correction of demos
 * 800 * 600 fixed size
