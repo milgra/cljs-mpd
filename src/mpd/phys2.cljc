@@ -11,7 +11,7 @@
    :e elasticity})
 
 
-(defn dguard2 [masses {wa :w :as massa} {wb :w :as massb} distance elasticity]
+(defn dguard2 [masses massa massb distance elasticity]
   "create distance guard"
   (let [{wa :w} (masses massa)
         {wb :w} (masses massb)
@@ -25,10 +25,10 @@
      }))
 
 
-(defn aguard2 [masses {wa :w :as massa} massb {wc :w :as massc} minangle maxangle power]
+(defn aguard2 [masses massa massb massc minangle maxangle power]
   "create angle guard"
   (let [{wa :w} (masses massa)
-        {wc :w} (masses massb)
+        {wc :w} (masses massc)
         sum (+ wa wc)]
     {:a massa
      :b massb
