@@ -2,6 +2,30 @@
   (:require [mpd.math2 :as math2]))
 
 
+(defn mass2 [x y radius weight elasticity]
+  "create basic structure"
+  {:p [x y] ;; position
+   :d [0 0] ;; direction
+   :w weight
+   :r radius
+   :e elasticity})
+
+
+(defn dguard2 [massa massb distance elasticity]
+  "create distance guard"
+  {:a massa
+   :b massb
+   :d distance
+   :e elasticity})
+
+
+(defn segment2
+  "creates segment 2d structure as [trans basis]"
+  [[x y][ z v]]
+  {:t [x y]
+   :b [(- z x) (- v y)]})
+
+
 (defn timescale [masses delta]
   "check collisions and move masses to new positions considering collisions"
   (reduce
@@ -19,7 +43,7 @@
     (if (not-empty src)
       (concat res
        (reduce
-        (fn builder [res [x y]] (conj res (math2/segment2 x y)))
+        (fn builder [res [x y]] (conj res (segment2 x y)))
         []
         (partition 2 1 (first src))))
        (recur (rest src) res))))
@@ -47,29 +71,12 @@
 
 
 (defn move-mass-back [[tx ty][bx by][mx my][mbx mby] radius]
-  "moves line closer to mass with radius, gets isp"
+  "moves mass back to the point where radius doesn't touch the line"
   (let [[cx cy] (math2/isp-l2-l2 [tx ty][bx by][mx my][by (- bx)])
         [dx dy] [(- mx cx)(- my cy)]
         [nx ny] (math2/resize-v2 [dx dy] radius)
         [fx fy] (math2/add-v2 [cx cy] [nx ny])]
     (math2/isp-l2-l2 [fx fy] [bx by] [mx my] [mbx mby])))
-
-
-(defn mass2 [x y radius weight elasticity]
-  "create basic structure"
-  {:p [x y] ;; position
-   :d [0 0] ;; direction
-   :w weight
-   :r radius
-   :e elasticity})
-
-
-(defn dguard2 [massa massb distance elasticity]
-  "create distance guard"
-  {:a massa
-   :b massb
-   :d distance
-   :e elasticity})
 
 
 (defn keep-distances [masses dguards]

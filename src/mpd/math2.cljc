@@ -36,13 +36,6 @@
     angle))
 
 
-(defn segment2
-  "creates segment 2d structure as [trans basis]"
-  [[x y][ z v]]
-  {:t [x y]
-   :b [(- z x) (- v y)]})
-
-
 (defn isp-l2-l2 [[tax tay][bax bay][tbx tby][bbx bby]]
   "line-line intersection calculation based on determinant calculation : Ax + By = C
    parameters : trans a basis a trans b basis b"
