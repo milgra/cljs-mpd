@@ -1,9 +1,10 @@
 (ns demo.scenes
-  (:require [mpd.phys2 :as phys2]))
+  (:require [mpd.phys2 :as phys2]
+            [mpd.math2 :as math2]))
 
 (defn scene0 [w h]
   "simple masspoints on scattered surface"
-  (let [points (let [stepping (/ w 20.0)]
+  (let [bottom (let [stepping (/ w 20.0)]
                  [(for [x (range 0 21)]
                     (cond
                       (= x 0) [0 0]
@@ -11,6 +12,14 @@
                       (= x 19) [w (- h (rand 200))]
                       (= x 20) [w 0]
                       :default [( * x stepping ) (- h (rand 200))]))])
+
+        islanda (let [stepping (/ w 20.0)]
+                 [(for [x (range 0 5)] [(+ 100 (* x stepping)) (- 400 (rand 200))])])
+
+        islandb (let [stepping (/ w 20.0)]
+                 [(for [x (range 0 5)] [(+ 500 (* x stepping)) (- 200 (rand 200))])])
+
+        points (concat bottom islanda islandb)
 
         masses (reduce
                 (fn [result number]
@@ -25,7 +34,7 @@
 
         surfaces (phys2/surfaces-from-pointlist points)
 
-        lines (apply concat (partition 2 1 (apply concat points)))]
+        lines (reduce (fn [result {t :t b :b}] (conj result t (math2/add-v2 t b))) [] surfaces)]
     
     {:surfaces surfaces
      :dguards dguards

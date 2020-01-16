@@ -56,17 +56,18 @@
 
 
 (defn surfaces-from-pointlist
-  "Generates physics/segment2-s from surface point list"
+  "Generates physics/segment2-s from surface point list array"
   [surfacepoints]
-  (loop [src surfacepoints
-         res []]
-    (if (not-empty src)
-      (concat res
-       (reduce
-        (fn builder [res [x y]] (conj res (segment2 x y)))
-        []
-        (partition 2 1 (first src))))
-       (recur (rest src) res))))
+  (reduce
+   (fn [result points]
+     (concat
+      result
+      (reduce
+       (fn builder [res [x y]] (conj res (segment2 x y)))
+       []
+       (partition 2 1 points))))
+   []
+   surfacepoints))
 
 
 (defn get-colliding-surfaces [pos dir radius surfaces]
