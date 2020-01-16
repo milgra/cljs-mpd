@@ -25,16 +25,12 @@
 
 
 (defn angle-x-v2 [[x y]]
+  "angle of vector from x axis"
   (Math/atan2 y x))
 
 
-(defn angle-v2-v2 [[a b][c d]]
-  (Math/acos (/
-              (+ (* a c)(* b d))
-              (* (length-v2 [a b]) (length-v2 [c d])))))
-
-
 (defn normalize-angle [angle]
+  "bring angle between 0 and 2PI radians"
   (if (< angle 0)
     (+ angle Math/PI Math/PI)
     angle))
@@ -104,6 +100,7 @@
 
 
 (defn dist-p2-v2 [[px py] [tx ty] [bx by]]
+  "perpendicular distance of point and vector considering endpoints"
   (let [cross (isp-l2-l2 [tx ty][bx by][px py][(- by) bx])
         connv (sub-v2 [px py] cross)]
     (if (p2-in-v2? cross [tx ty] [bx by] 0)
@@ -122,11 +119,3 @@
 (defn dist-p2-p2-cubic [[ax ay][bx by]]
   "returns distance of two points based on x and y distances to avoid square root calculation"
   (+ (Math/abs (- bx ax)) (Math/abs (- by ay))))
-
-
-(defn rotate-90-cw [ [x y] ]
-  [y (- x)])
-
-
-(defn rotate-90-ccw [ [x y] ]
-  [(- y) x])
