@@ -25,7 +25,7 @@
      }))
 
 
-(defn aguard2 [masses {wa :w :as massa} massb {wc :w :as massc} minangle maxangle]
+(defn aguard2 [masses {wa :w :as massa} massb {wc :w :as massc} minangle maxangle power]
   "create angle guard"
   (let [{wa :w} (masses massa)
         {wc :w} (masses massb)
@@ -33,6 +33,7 @@
     {:a massa
      :b massb
      :c massc
+     :p power
      :ra (/ wa sum)
      :rb (/ wc sum)
      :min minangle
@@ -127,7 +128,7 @@
 (defn keep-angles [masses aguards]
   (reduce
    (fn [result aguard]
-     (let [{:keys [a b c ra rc min max]} aguard
+     (let [{:keys [a b c p ra rc min max]} aguard
            {pa :p da :d :as massa} (get result a)
            {pb :p db :d :as massb} (get result b)
            {pc :p dc :d :as massc} (get result c)
@@ -157,9 +158,9 @@
                ndcx ( + (pb 0) (* (Math/cos newangledc) fdclength ))
                ndcy ( + (pb 1) (* (Math/sin newangledc) fdclength ))
                ;; calculate forces. b will move backwards because we rotate da and dc around their centers
-               force_a (math2/scale-v2 (math2/sub-v2 [ndax nday] fa) 0.4)
-               force_c (math2/scale-v2 (math2/sub-v2 [ndcx ndcy] fc) 0.4)
-               force_b (math2/scale-v2 (math2/add-v2 force_a force_c) -0.1)
+               force_a (math2/scale-v2 (math2/sub-v2 [ndax nday] fa) (* 0.5 p))
+               force_c (math2/scale-v2 (math2/sub-v2 [ndcx ndcy] fc) (* 0.5 p))
+               force_b (math2/scale-v2 (math2/add-v2 force_a force_c) (* -0.5 p))
                ;; update dires
                newmassa (assoc massa :d ( math2/add-v2 da force_a))
                newmassb (assoc massb :d ( math2/add-v2 db force_b))

@@ -28,27 +28,20 @@
      EventType.MOUSEUP           
      (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "up"})))
 
-    (events/listen
-     js/window
-     EventType.RESIZE
-     (fn [event] (resize-context!))))
+    ;; (events/listen
+    ;;  js/window
+    ;;  EventType.RESIZE
+    ;;  (fn [event] (resize-context!)))
+  )
 
 
 (defn draw-world [state]
   "draws surfaces and masspoints"
-  (let [projection (math4/proj_ortho
-                    0
-                    (.-innerWidth js/window)
-                    (.-innerHeight js/window)
-                    0
-                    -10.0
-                    10.0)
-        
+  (let [projection (math4/proj_ortho 0 800 600 0 -10.0 10.0)
         scene (:scene state)
         drawer (:drawer state)
         masses (:masses scene)
         dguards (:dguards scene)
-
         nlines (reduce
                 (fn [result {a :a b :b :as dguard}]
                   (let [{pa :p :as massa} (masses a)
@@ -83,9 +76,7 @@
                 scenes/scene3]
         nextindex (if (= (inc index) 4) 0 (inc index))]
     (println "load scene" nextindex)
-    ((get scenes nextindex)
-     (.-innerWidth js/window)
-     (.-innerHeight js/window))))
+    ((get scenes nextindex) 800 600)))
 
 
 (defn animate [state draw-fn]
@@ -106,12 +97,11 @@
   (let [tchch (chan)
         drawer (webgl/init)
         state {:drawer drawer
-               :scene (scenes/scene0 (.-innerWidth js/window)
-                                     (.-innerHeight js/window))
+               :scene (scenes/scene0 800 600)
                :time 0}]
 
     (init-events! tchch)
-    (resize-context!)
+    ;;(resize-context!)
     
     (animate
      state

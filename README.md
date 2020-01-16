@@ -1,6 +1,8 @@
 # cljs-mpd
 Mass Point Dynamics Engine for ClojureScript
 
+[![screenshot](screenshot.png) (https://milgra.github.io/cljs-mpd/index.html)]
+
 [Live Demo](https://milgra.github.io/cljs-mpd/index.html)
 
 ## Features
@@ -18,7 +20,6 @@ Mass Point Dynamics Engine for ClojureScript
 
 ## Todo
 
-* 800 * 600 fixed size
-* screenshot in readme.md
-* refine proximity/collosion to calm particles
+* curtain demo scene
+* refine proximity/collosion to calm particles and angle guards
 * write tests
