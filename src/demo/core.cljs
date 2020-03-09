@@ -1,7 +1,6 @@
 (ns ^:figwheel-hooks demo.core
   (:require [goog.dom :as gdom]
             [goog.events :as events]
-            [tubax.core :refer [xml->clj]]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<! chan put! take! poll!]]
             [cljs.core.async :refer-macros [go]]
@@ -50,7 +49,7 @@
                 []
                 dguards)]
 
-    (webgl/clear drawer)
+    (webgl/clear! drawer)
     (when (> (count nlines) 0) (webgl/drawlines! drawer projection nlines))
     (webgl/drawlines! drawer projection (:lines scene))
     (webgl/drawpoints! drawer projection (map :p (vals (:masses scene))))))
