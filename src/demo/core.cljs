@@ -58,12 +58,10 @@
 (defn update-world [state delta]
   "updates current masses"
   (let [newmasses (-> (:masses state)
-                      (phys2/add-gravity [0.0 0.2])
-                      (phys2/timescale delta)
+                      (phys2/add-gravity [0.0 (* delta 0.2)])
                       (phys2/keep-angles (:aguards state))
                       (phys2/keep-distances (:dguards state))
-                      (phys2/move-masses (:surfaces state))
-                      (phys2/timescale (/ 1.0 delta)))]
+                      (phys2/move-masses (:surfaces state)))]
     (assoc state :masses newmasses)))
 
 
