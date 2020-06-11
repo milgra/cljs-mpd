@@ -12,26 +12,13 @@
   (:import [goog.events EventType]))
   
 
-(defn resize-context! [ ]
-  "resizes canvas on window size change"
-  (let [canvas (. js/document getElementById "main")]
-        (set! (. canvas -width) (. js/window -innerWidth))
-        (set! (. canvas -height) (. js/window -innerHeight))))
-
-
 (defn init-events! [tchch]
   "inits mouse and window events"
     
     (events/listen
      js/document         
      EventType.MOUSEUP           
-     (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "up"})))
-
-    ;; (events/listen
-    ;;  js/window
-    ;;  EventType.RESIZE
-    ;;  (fn [event] (resize-context!)))
-  )
+     (fn [event] (put! tchch {:code "mouse" :x (.-clientX event) :y (.-clientY event) :type "up"}))))
 
 
 (defn draw-world [state]
@@ -98,7 +85,6 @@
                :time 0}]
 
     (init-events! tchch)
-    ;;(resize-context!)
     
     (animate
      state

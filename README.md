@@ -1,6 +1,10 @@
 # cljs-mpd
 Mass Point Dynamics Engine for ClojureScript
 
+run :
+
+```shadow-cljs watch app```
+
 ![screenshot](screenshot.png)
 
 [Live Demo](https://milgra.github.io/cljs-mpd/index.html)
