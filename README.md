@@ -24,6 +24,7 @@ run :
 
 ## Todo
 
+* vertical surface problem?
 * curtain demo scene
 * refine proximity/collosion to calm particles and angle guards
 * write tests

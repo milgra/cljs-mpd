@@ -8,8 +8,8 @@
                  [(for [x (range 0 21)]
                     (cond
                       (= x 0) [0 0]
-                      (= x 1) [0 (- h (rand 100))]
-                      (= x 19) [w (- h (rand 100))]
+                      (= x 1) [3 (- h (rand 100))]
+                      (= x 19) [(- w 3) (- h (rand 100))]
                       (= x 20) [w 0]
                       :default [( * x stepping ) (- h (rand 100))]))])
 
@@ -24,7 +24,7 @@
         masses (reduce
                 (fn [result number]
                   (let [id (keyword (str number))
-                        mass (phys2/mass2 ( + 50.0 (rand (- w 100.0 ))) (rand 300) 1.0 1.0 0.8)]
+                        mass (phys2/mass2 ( + 50.0 (rand (- w 100.0 ))) (rand 300) 1.0 1.0 0.1 0.8)]
                     (assoc result id mass)))
                 {}
                 (range 0 15))
@@ -50,8 +50,8 @@
                  [(for [x (range 0 21)]
                     (cond
                       (= x 0) [0 0]
-                      (= x 1) [0 (- h (rand 100))]
-                      (= x 19) [w (- h (rand 100))]
+                      (= x 1) [3 (- h (rand 100))]
+                      (= x 19) [(- w 3) (- h (rand 100))]
                       (= x 20) [w 0]
                       :default [( * x stepping ) (- h (rand 100))]))])
 
@@ -66,7 +66,7 @@
         masses (reduce
                 (fn [result number]
                   (let [id (keyword (str number))
-                        mass (phys2/mass2 (+ 150.0 (* number 30.0)) (rand 10) 1.0 1.0 0.5)]
+                        mass (phys2/mass2 (+ 150.0 (* number 30.0)) (rand 10) 1.0 1.0 0.1 0.5)]
                     (assoc result id mass)))
                 {}
                 (range 0 21))
@@ -100,8 +100,8 @@
                  [(for [x (range 0 21)]
                     (cond
                       (= x 0) [0 0]
-                      (= x 1) [0 (- h (rand 100))]
-                      (= x 19) [w (- h (rand 100))]
+                      (= x 1) [3 (- h (rand 100))]
+                      (= x 19) [(- w 3) (- h (rand 100))]
                       (= x 20) [w 0]
                       :default [( * x stepping ) (- h (rand 100))]))])
 
@@ -116,7 +116,7 @@
         masses (reduce
                 (fn [result number]
                   (let [id (keyword (str number))
-                        mass (phys2/mass2 (+ 100.0 (* number 30.0)) (rand 10) 1.0 1.0 0.5)]
+                        mass (phys2/mass2 (+ 100.0 (* number 30.0)) (rand 10) 1.0 1.0 0.1 0.5)]
                     (assoc result id mass)))
                 {}
                 (range 0 20))
@@ -153,8 +153,8 @@
                  [(for [x (range 0 21)]
                     (cond
                       (= x 0) [0 0]
-                      (= x 1) [0 (- h (rand 100))]
-                      (= x 19) [w (- h (rand 100))]
+                      (= x 1) [3 (- h (rand 100))]
+                      (= x 19) [(- w 3) (- h (rand 100))]
                       (= x 20) [w 0]
                       :default [( * x stepping ) (- h (rand 100))]))])
 
@@ -166,17 +166,17 @@
 
         points (concat bottom islanda islandb)
 
-        head (phys2/mass2 300.0 60.0 1.0 1.0 0.7)
-        neck (phys2/mass2 300.0 100.0 1.0 1.0 0.7)
-        hip (phys2/mass2 300.0 200.0 1.0 1.0 0.7)
-        lknee (phys2/mass2 250.0 250.0 1.0 1.0 0.7)
-        rknee (phys2/mass2 350.0 250.0 1.0 1.0 0.7)
-        lfoot (phys2/mass2 200.0 300.0 1.0 1.0 0.7)
-        rfoot (phys2/mass2 400.0 300.0 1.0 1.0 0.7)
-        lelbow (phys2/mass2 250.0 100.0 1.0 1.0 0.7)
-        relbow (phys2/mass2 350.0 100.0 1.0 1.0 0.7)
-        lhand (phys2/mass2 200.0 100.0 1.0 1.0 0.7)
-        rhand (phys2/mass2 400.0 100.0 1.0 1.0 0.7)
+        head (phys2/mass2 300.0 60.0 1.0 1.0 0.1 0.7)
+        neck (phys2/mass2 300.0 100.0 1.0 1.0 0.1 0.7)
+        hip (phys2/mass2 300.0 200.0 1.0 1.0 0.1 0.7)
+        lknee (phys2/mass2 250.0 250.0 1.0 1.0 0.1 0.7)
+        rknee (phys2/mass2 350.0 250.0 1.0 1.0 0.1 0.7)
+        lfoot (phys2/mass2 200.0 300.0 1.0 1.0 0.1 0.7)
+        rfoot (phys2/mass2 400.0 300.0 1.0 1.0 0.1 0.7)
+        lelbow (phys2/mass2 250.0 100.0 1.0 1.0 0.1 0.7)
+        relbow (phys2/mass2 350.0 100.0 1.0 1.0 0.1 0.7)
+        lhand (phys2/mass2 200.0 100.0 1.0 1.0 0.1 0.7)
+        rhand (phys2/mass2 400.0 100.0 1.0 1.0 0.1 0.7)
 
         masses {:h head
                 :n neck

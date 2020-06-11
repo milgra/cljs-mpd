@@ -9,6 +9,10 @@
   [(- ax bx) (- ay by)])
 
 
+(defn dot-v2 [[ax ay][bx by]]
+  (+ (* ax bx) (* ay by)))
+
+ 
 (defn length-v2 [[ax ay]]
   (Math/sqrt (+ (* ax ax) (* ay ay))))
 
@@ -18,7 +22,7 @@
 
 
 (defn resize-v2 [[x y] size]
-  (if (and (not= size 0) (or (not= x 0) (not= x 0)))
+  (if (and (not= size 0) (or (not= x 0) (not= y 0)))
     (let [ratio (/ size (length-v2 [x y]))]
       [(* x ratio) (* y ratio)])
     [x y]))
@@ -27,6 +31,10 @@
 (defn angle-x-v2 [[x y]]
   "angle of vector from x axis"
   (Math/atan2 y x))
+
+
+(defn rad-to-degree [rad]
+  (/ (* 180 rad) 3.14))
 
 
 (defn normalize-angle [angle]
@@ -80,16 +88,87 @@
      (Math/sqrt (+ (* bx bx) (* by by))))))
 
 
-(defn isp-v2-v2 [transa basisa transb basisb radius]
-  "vector - vector intersection calculation with given radius from endpoints"
+(defn norm-p2-l2
+  "creates vector normal to line defined by [t b] from p"
+  [[px py] [tx ty] [bx by]]
+  (let [[cx cy] (isp-l2-l2 [tx ty] [bx by] [px py] [by (- bx)])]
+    [(- px cx) (- py cy)]))
+
+
+(defn intersect-v2-v2
+  "intersection point of two vectors"
+  [transa basisa transb basisb]
   (let [cp (isp-l2-l2 transa basisa transb basisb)]
     (if (= cp nil)
-     nil
-     (if (and
-          (p2-in-v2? cp transa basisa radius)
-          (p2-in-v2? cp transb basisb radius))
+      nil
+      (if (and
+          (p2-in-v2? cp transa basisa 1.0) ; point in on first vector
+          (p2-in-v2? cp transb basisb 1.0)) ; point is on translated second vector
        cp
        nil))))
+
+
+(defn point-outside-rect
+  "check if point outside rect defined by two points"
+  [[ax ay] [bx by] [px py] r]
+  (or (and (< px (- ax r)) (< px (- bx r)))
+      (and (> px (+ ax r)) (> px (+ bx r)))
+      (and (< py (- ay r)) (< py (- by r)))
+      (and (> py (+ ay r)) (> py (+ by r)))))
+
+
+(defn rect-outside-rect
+  "check if rect outside rect defined by two points"
+  [[ax ay][bx by][cx cy][dx dy]]
+  (or (and (< ax cx) (< ax dx) (< bx cx) (< bx dx))
+      (and (> ax cx) (> ax dx) (> bx cx) (> bx dx)) 
+      (and (< ay cy) (< ay dy) (< by cy) (< by dy))
+      (and (> ay cy) (> ay dy) (> by cy) (> by dy))))
+
+
+(defn get-line-side
+  "checks that pc is on which side of the line defined by pa pb using determinant of vectors (AB,AC)
+  negative is left side, zero is on line, positive is right side"
+  [[ax ay][bx by][cx cy]]
+  (- (* (- bx ax ) (- cy ay)) (* (- by ay) (- cx ax))))
+
+
+(defn collide-v2-v2
+  "check intersection points of the two lines, if it is in the bounding box of the two vectors return isp
+  if not then check if point is on the right side of the vector and the projection point is in the bounding box
+  of the second vector"
+  [pa [ax ay :as da] pb [bx by :as db] radius]
+  (let [end-a (add-v2 pa da)
+        end-b (add-v2 pb db)]
+    (if (rect-outside-rect pa end-a pb end-b)
+      ;; rects don't cover each other
+      nil
+      ;; rects cover each other
+      (if (or (and (= ax 0)(= ay 0)) (and (= bx 0)(= by 0)))
+        ;; invalid lines or no collision in rects
+        nil
+        ;; valid lines
+        (let [isp (isp-l2-l2 pa da pb db)
+              normal [by (- bx)]
+              normal-min (resize-v2 normal 0.2)]
+          (if (or
+               (point-outside-rect pb end-b isp 0.1)
+               (point-outside-rect pa end-a isp 0.1))
+            ;; isp is outside vectors, check if projection point is on the right side of the vector
+            (let [prj (isp-l2-l2 pb db pa [by (- bx)])]
+              (if (point-outside-rect pb end-b prj 0.1)
+                ;; projection point is outside surface
+                nil
+                ;; projection point is inside surface, check if direction is okay
+                (let [tos (sub-v2 prj pa) ;; to surface
+                      dot (dot-v2 tos normal)] ;; dot product of to surface vector and surface normal vector
+                  (if (and (> dot 0) (< (length-v2 tos) radius))
+                    ;; to surface vector is in the same direction as normal vector and in radius distance
+                    (add-v2 prj normal-min) ;; push over surface a little bit to avoid intersection in next iteration
+                    ;; to surface vector is in the opposing direction
+                    nil))))
+            ;; isp is inside vectors, return with it
+            (add-v2 isp normal-min))))))) ;; push over surface
 
 
 (defn dist-p2-v2 [[px py] [tx ty] [bx by]]
@@ -98,8 +177,7 @@
         connv (sub-v2 [px py] cross)]
     (if (p2-in-v2? cross [tx ty] [bx by] 0)
       (length-v2 connv)
-      ##Inf
-      )))
+      ##Inf)))
 
 
 (defn mirror-v2-bases [[ax ay] [vx vy]]
@@ -112,3 +190,14 @@
 (defn dist-p2-p2-cubic [[ax ay][bx by]]
   "returns distance of two points based on x and y distances to avoid square root calculation"
   (+ (Math/abs (- bx ax)) (Math/abs (- by ay))))
+
+
+(defn rotate-90-cw [ [x y] ]
+  [y (- x)])
+
+
+(defn rotate-90-ccw [ [x y] ]
+  [(- y) x])
+
+(defn rotate-up-v2 [ [x y] ]
+  (if (< x 0) [(- y) x] [y (- x)]))

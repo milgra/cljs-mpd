@@ -48,7 +48,7 @@
                       (phys2/add-gravity [0.0 (* delta 0.2)])
                       (phys2/keep-angles (:aguards state))
                       (phys2/keep-distances (:dguards state))
-                      (phys2/move-masses (:surfaces state)))]
+                      (phys2/move-masses (:surfaces state) 0.2))]
     (assoc state :masses newmasses)))
 
 
